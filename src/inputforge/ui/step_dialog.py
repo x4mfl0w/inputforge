@@ -39,6 +39,7 @@ from inputforge.config.models import (
     Profile,
     SearchArea,
 )
+from inputforge.i18n import N_, tr
 from inputforge.platform.base import Platform, Rect
 from inputforge.ui.describe import (
     ACTION_LABELS,
@@ -75,7 +76,7 @@ class EditorContext:
 def _combo(items: dict[Any, str], current: Any) -> QComboBox:
     c = QComboBox()
     for value, label in items.items():
-        c.addItem(label, value)
+        c.addItem(tr(label), value)
     idx = c.findData(current)
     c.setCurrentIndex(max(idx, 0))
     return c
@@ -98,7 +99,7 @@ class StepDialog(QDialog):
         self.result_action: Any | None = None
         self._getters: dict[str, Callable[[], Any]] = {}
 
-        self.setWindowTitle(f"Schritt: {ACTION_LABELS[kind]}")
+        self.setWindowTitle(tr("Schritt: {name}", name=tr(ACTION_LABELS[kind])))
         self.setMinimumWidth(520)
         root = QVBoxLayout(self)
         self.form = QFormLayout()
@@ -106,13 +107,13 @@ class StepDialog(QDialog):
 
         getattr(self, f"_build_{kind}")()
 
-        common = QGroupBox("Allgemein")
+        common = QGroupBox(tr("Allgemein"))
         cf = QFormLayout(common)
         self.post_delay = ms_spin()
         self.post_delay.setValue(self.action.post_delay_ms)
-        cf.addRow("Warten danach", self.post_delay)
+        cf.addRow(tr("Warten danach"), self.post_delay)
         self.comment = QLineEdit(self.action.comment)
-        cf.addRow("Kommentar", self.comment)
+        cf.addRow(tr("Kommentar"), self.comment)
         root.addWidget(common)
 
         buttons = QDialogButtonBox(
@@ -143,16 +144,20 @@ class StepDialog(QDialog):
         a = self.action
         self.keys = HotkeyEdit(a.keys, chord=True)
         self.keys.recording_changed.connect(lambda on: self.ctx.pause_hotkeys(on))
-        self.form.addRow("Taste(n)", self.keys)
-        self.form.addRow("", QLabel("Mehrere Tasten gleichzeitig mit + verbinden, z. B. 1+2+3"))
+        self.form.addRow(tr("Taste(n)"), self.keys)
+        self.form.addRow("", QLabel(tr("Mehrere Tasten gleichzeitig mit + verbinden, z. B. 1+2+3")))
         mode = _combo(
-            {"tap": "Drücken & loslassen", "down": "Nur drücken (halten)", "up": "Nur loslassen"},
+            {
+                "tap": N_("Drücken & loslassen"),
+                "down": N_("Nur drücken (halten)"),
+                "up": N_("Nur loslassen"),
+            },
             a.mode,
         )
-        self.form.addRow("Art", mode)
+        self.form.addRow(tr("Art"), mode)
         hold = ms_spin(60_000)
         hold.setValue(a.hold_ms)
-        self.form.addRow("Haltedauer", hold)
+        self.form.addRow(tr("Haltedauer"), hold)
         self._bind("keys", self.keys.text)
         self._bind("mode", mode.currentData)
         self._bind("hold_ms", hold.value)
@@ -160,23 +165,23 @@ class StepDialog(QDialog):
     def _build_type_text(self) -> None:
         a = self.action
         text = QLineEdit(a.text)
-        self.form.addRow("Text", text)
+        self.form.addRow(tr("Text"), text)
         delay = ms_spin(10_000)
         delay.setValue(a.key_delay_ms)
         hold = ms_spin(10_000)
         hold.setValue(a.hold_ms)
-        self.form.addRow("Pause zwischen Tasten", delay)
-        self.form.addRow("Haltedauer je Taste", hold)
+        self.form.addRow(tr("Pause zwischen Tasten"), delay)
+        self.form.addRow(tr("Haltedauer je Taste"), hold)
         self._bind("text", text.text)
         self._bind("key_delay_ms", delay.value)
         self._bind("hold_ms", hold.value)
 
     def _coords_row(self, x: int | None, y: int | None, space: CoordSpace, optional: bool) -> None:
-        self.use_pos = QCheckBox("An aktueller Mausposition")
+        self.use_pos = QCheckBox(tr("An aktueller Mausposition"))
         self.pos_x = _spin(-100_000, 100_000, x or 0)
         self.pos_y = _spin(-100_000, 100_000, y or 0)
         self.space = _combo(SPACE_LABELS, space)
-        pick = QPushButton("Vom Bildschirm wählen…")
+        pick = QPushButton(tr("Vom Bildschirm wählen…"))
         pick.clicked.connect(self._pick_point)
         row = QHBoxLayout()
         row.addWidget(QLabel("X"))
@@ -196,8 +201,8 @@ class StepDialog(QDialog):
 
             self.use_pos.toggled.connect(_toggle)
             self.use_pos.setChecked(x is None)
-        self.form.addRow("Position", w)
-        self.form.addRow("Koordinaten", self.space)
+        self.form.addRow(tr("Position"), w)
+        self.form.addRow(tr("Koordinaten"), self.space)
 
     def _pick_point(self) -> None:
         res = pick_from_screen(
@@ -209,7 +214,9 @@ class StepDialog(QDialog):
             rel = res.relative_to_window()
             if rel is None:
                 QMessageBox.warning(
-                    self, "Zielfenster", "Zielfenster nicht gefunden – nutze Bildschirmkoordinaten."
+                    self,
+                    tr("Zielfenster"),
+                    tr("Zielfenster nicht gefunden – nutze Bildschirmkoordinaten."),
                 )
                 self.space.setCurrentIndex(self.space.findData(CoordSpace.SCREEN))
                 self.pos_x.setValue(res.rect.x)
@@ -224,16 +231,16 @@ class StepDialog(QDialog):
     def _build_mouse_click(self) -> None:
         a = self.action
         button = _combo(BUTTON_LABELS, a.button)
-        self.form.addRow("Taste", button)
+        self.form.addRow(tr("Taste"), button)
         self._coords_row(a.x, a.y, a.space, optional=True)
         clicks = _spin(1, 100, a.clicks)
         hold = ms_spin(60_000)
         hold.setValue(a.hold_ms)
         interval = ms_spin(10_000)
         interval.setValue(a.interval_ms)
-        self.form.addRow("Anzahl Klicks", clicks)
-        self.form.addRow("Haltedauer", hold)
-        self.form.addRow("Pause zwischen Klicks", interval)
+        self.form.addRow(tr("Anzahl Klicks"), clicks)
+        self.form.addRow(tr("Haltedauer"), hold)
+        self.form.addRow(tr("Pause zwischen Klicks"), interval)
         self._bind("button", button.currentData)
         self._bind("x", lambda: None if self.use_pos.isChecked() else self.pos_x.value())
         self._bind("y", lambda: None if self.use_pos.isChecked() else self.pos_y.value())
@@ -245,7 +252,9 @@ class StepDialog(QDialog):
     def _build_mouse_move(self) -> None:
         a = self.action
         self._coords_row(a.x, a.y, a.space, optional=False)
-        relative = QCheckBox("Relativ zur aktuellen Position (Raw-Bewegung, z. B. Kamera drehen)")
+        relative = QCheckBox(
+            tr("Relativ zur aktuellen Position (Raw-Bewegung, z. B. Kamera drehen)")
+        )
         relative.setChecked(a.relative)
         self.form.addRow("", relative)
         self._bind("x", self.pos_x.value)
@@ -259,8 +268,8 @@ class StepDialog(QDialog):
         ms.setValue(a.ms)
         rnd = ms_spin(60_000)
         rnd.setValue(a.random_ms)
-        self.form.addRow("Dauer", ms)
-        self.form.addRow("+ zufällig bis", rnd)
+        self.form.addRow(tr("Dauer"), ms)
+        self.form.addRow(tr("+ zufällig bis"), rnd)
         self._bind("ms", ms.value)
         self._bind("random_ms", rnd.value)
 
@@ -272,11 +281,11 @@ class StepDialog(QDialog):
         title.setCurrentText(a.title)
         title_edit = title.lineEdit()
         assert title_edit is not None
-        title_edit.setPlaceholderText("leer = Zielfenster des Profils")
+        title_edit.setPlaceholderText(tr("leer = Zielfenster des Profils"))
         wait = ms_spin(10_000)
         wait.setValue(a.wait_ms)
-        self.form.addRow("Fenstertitel enthält", title)
-        self.form.addRow("Warten danach", wait)
+        self.form.addRow(tr("Fenstertitel enthält"), title)
+        self.form.addRow(tr("Warten danach"), wait)
         self._bind("title", title.currentText)
         self._bind("wait_ms", wait.value)
 
@@ -286,9 +295,9 @@ class StepDialog(QDialog):
         for m in self.ctx.profile.macros:
             combo.addItem(m.name, m.id)
         combo.setCurrentIndex(max(combo.findData(a.macro_id), 0))
-        self.form.addRow("Makro", combo)
+        self.form.addRow(tr("Makro"), combo)
         self.form.addRow(
-            "", QLabel("Die Schritte des Makros laufen einmal inline (ohne Schleife).")
+            "", QLabel(tr("Die Schritte des Makros laufen einmal inline (ohne Schleife)."))
         )
         self._bind("macro_id", combo.currentData)
 
@@ -297,7 +306,7 @@ class StepDialog(QDialog):
         self.image = QLineEdit(a.image)
         browse = QPushButton("…")
         browse.clicked.connect(self._browse_image)
-        capture = QPushButton("Vom Bildschirm ausschneiden…")
+        capture = QPushButton(tr("Vom Bildschirm ausschneiden…"))
         capture.clicked.connect(self._capture_image)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
@@ -305,12 +314,12 @@ class StepDialog(QDialog):
         row.addWidget(browse)
         rw = QWidget()
         rw.setLayout(row)
-        self.form.addRow("Bild", rw)
+        self.form.addRow(tr("Bild"), rw)
         self.form.addRow("", capture)
         self.preview = QLabel()
         self.preview.setMinimumHeight(48)
         self.preview.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.form.addRow("Vorschau", self.preview)
+        self.form.addRow(tr("Vorschau"), self.preview)
         self.image.textChanged.connect(self._update_preview)
         self._update_preview()
 
@@ -319,39 +328,39 @@ class StepDialog(QDialog):
         self.confidence.setSingleStep(0.01)
         self.confidence.setDecimals(2)
         self.confidence.setValue(a.confidence)
-        self.form.addRow("Mindest-Übereinstimmung", self.confidence)
-        gray = QCheckBox("Graustufen (robuster bei Farbeffekten, etwas ungenauer)")
+        self.form.addRow(tr("Mindest-Übereinstimmung"), self.confidence)
+        gray = QCheckBox(tr("Graustufen (robuster bei Farbeffekten, etwas ungenauer)"))
         gray.setChecked(a.grayscale)
         self.form.addRow("", gray)
 
         self.area = _combo(AREA_LABELS, a.area)
-        self.form.addRow("Suchbereich", self.area)
+        self.form.addRow(tr("Suchbereich"), self.area)
         rx, ry, rw_, rh = a.region or (0, 0, 400, 300)
         self.rx, self.ry = _spin(-100_000, 100_000, rx), _spin(-100_000, 100_000, ry)
         self.rw, self.rh = _spin(1, 100_000, rw_), _spin(1, 100_000, rh)
-        pick_region = QPushButton("Wählen…")
+        pick_region = QPushButton(tr("Wählen…"))
         pick_region.clicked.connect(self._pick_region)
         rrow = QHBoxLayout()
         rrow.setContentsMargins(0, 0, 0, 0)
-        for label, w in (("X", self.rx), ("Y", self.ry), ("B", self.rw), ("H", self.rh)):
+        for label, w in (("X", self.rx), ("Y", self.ry), (tr("B"), self.rw), (tr("H"), self.rh)):
             rrow.addWidget(QLabel(label))
             rrow.addWidget(w)
         rrow.addWidget(pick_region)
         region_w = QWidget()
         region_w.setLayout(rrow)
-        self.form.addRow("Bereich", region_w)
+        self.form.addRow(tr("Bereich"), region_w)
         self.area.currentIndexChanged.connect(
             lambda: region_w.setEnabled(self.area.currentData() == SearchArea.REGION)
         )
         region_w.setEnabled(a.area == SearchArea.REGION)
 
-        buttons: dict[MouseButton | None, str] = {None: "Nicht klicken (nur Maus hinbewegen)"}
+        buttons: dict[MouseButton | None, str] = {None: N_("Nicht klicken (nur Maus hinbewegen)")}
         for btn, label in BUTTON_LABELS.items():
             buttons[btn] = label
         button = _combo(buttons, a.button)
-        self.form.addRow("Klick", button)
+        self.form.addRow(tr("Klick"), button)
         anchor = _combo(ANCHOR_LABELS, a.anchor)
-        self.form.addRow("Klickpunkt", anchor)
+        self.form.addRow(tr("Klickpunkt"), anchor)
         ox, oy = _spin(-10_000, 10_000, a.offset_x), _spin(-10_000, 10_000, a.offset_y)
         orow = QHBoxLayout()
         orow.setContentsMargins(0, 0, 0, 0)
@@ -361,25 +370,25 @@ class StepDialog(QDialog):
         orow.addWidget(oy)
         ow = QWidget()
         ow.setLayout(orow)
-        self.form.addRow("Versatz", ow)
+        self.form.addRow(tr("Versatz"), ow)
         hold = ms_spin(10_000)
         hold.setValue(a.hold_ms)
-        self.form.addRow("Klick-Haltedauer", hold)
+        self.form.addRow(tr("Klick-Haltedauer"), hold)
 
         timeout = ms_spin(600_000)
         timeout.setValue(a.timeout_ms)
-        timeout.setSpecialValueText("einmal suchen")
-        self.form.addRow("Warten bis sichtbar", timeout)
+        timeout.setSpecialValueText(tr("einmal suchen"))
+        self.form.addRow(tr("Warten bis sichtbar"), timeout)
         retry = ms_spin(10_000, 10)
         retry.setValue(a.retry_interval_ms)
-        self.form.addRow("Suchintervall", retry)
+        self.form.addRow(tr("Suchintervall"), retry)
         not_found = _combo(NOT_FOUND_LABELS, a.on_not_found)
-        self.form.addRow("Wenn nicht gefunden", not_found)
-        notify = QCheckBox("Einblendung „NICHT GEFUNDEN“ anzeigen")
+        self.form.addRow(tr("Wenn nicht gefunden"), not_found)
+        notify = QCheckBox(tr("Einblendung „NICHT GEFUNDEN“ anzeigen"))
         notify.setChecked(a.notify_not_found)
         self.form.addRow("", notify)
 
-        test = QPushButton("Jetzt testen (3 s Verzögerung)")
+        test = QPushButton(tr("Jetzt testen (3 s Verzögerung)"))
         test.clicked.connect(self._test_image)
         self.test_result = QLabel()
         self.form.addRow(test, self.test_result)
@@ -415,7 +424,7 @@ class StepDialog(QDialog):
         path = self._image_path()
         pm = QPixmap(str(path)) if path.is_file() else QPixmap()
         if pm.isNull():
-            self.preview.setText("<i>Bild nicht gefunden</i>")
+            self.preview.setText(tr("<i>Bild nicht gefunden</i>"))
             return
         if pm.height() > 64:
             pm = pm.scaledToHeight(64, Qt.TransformationMode.SmoothTransformation)
@@ -424,7 +433,7 @@ class StepDialog(QDialog):
     def _browse_image(self) -> None:
         start = str(self.ctx.assets_dir())
         file, _ = QFileDialog.getOpenFileName(
-            self, "Bild wählen", start, "Bilder (*.png *.bmp *.jpg)"
+            self, tr("Bild wählen"), start, tr("Bilder (*.png *.bmp *.jpg)")
         )
         if file:
             self.image.setText(self._relativize(Path(file)))
@@ -445,13 +454,13 @@ class StepDialog(QDialog):
         assets.mkdir(parents=True, exist_ok=True)
         default = assets / f"icon_{time.strftime('%Y%m%d_%H%M%S')}.png"
         file, _ = QFileDialog.getSaveFileName(
-            self, "Vorlage speichern", str(default), "PNG (*.png)"
+            self, tr("Vorlage speichern"), str(default), "PNG (*.png)"
         )
         if not file:
             return
         ok, buf = cv2.imencode(".png", res.crop)
         if not ok:
-            QMessageBox.critical(self, "Fehler", "PNG konnte nicht kodiert werden")
+            QMessageBox.critical(self, tr("Fehler"), tr("PNG konnte nicht kodiert werden"))
             return
         Path(file).write_bytes(buf.tobytes())
         self.image.setText(self._relativize(Path(file)))
@@ -507,12 +516,20 @@ class StepDialog(QDialog):
         # Mit Schwelle 0 suchen, um den besten Score immer anzeigen zu können.
         best = find_template(shot, template, 0.0)
         if best is None:
-            self.test_result.setText("❌ Vorlage größer als Suchbereich")
+            self.test_result.setText(tr("❌ Vorlage größer als Suchbereich"))
             return
         ok = best.score >= self.confidence.value()
         sx, sy = origin.x + best.center[0], origin.y + best.center[1]
-        mark = "✅ Gefunden" if ok else "❌ Zu unsicher"
-        self.test_result.setText(f"{mark}: Score {best.score:.3f} bei ({sx}, {sy})")
+        mark = tr("✅ Gefunden") if ok else tr("❌ Zu unsicher")
+        self.test_result.setText(
+            tr(
+                "{mark}: Score {score} bei ({x}, {y})",
+                mark=mark,
+                score=f"{best.score:.3f}",
+                x=sx,
+                y=sy,
+            )
+        )
         if not ok:
             return
         thumb = shot[best.y : best.y + best.h, best.x : best.x + best.w]
@@ -532,7 +549,7 @@ class StepDialog(QDialog):
             self.result_action = self.model_cls.model_validate(data)
         except ValidationError as exc:
             msgs = "\n".join(f"• {'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
-            QMessageBox.warning(self, "Ungültige Eingabe", msgs)
+            QMessageBox.warning(self, tr("Ungültige Eingabe"), msgs)
             return
         self.accept()
 

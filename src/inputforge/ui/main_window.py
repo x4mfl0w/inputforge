@@ -7,7 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QObject, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QCloseEvent, QColor, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QColor, QKeySequence
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -40,6 +40,7 @@ from inputforge.config.storage import (
 )
 from inputforge.core.engine import Engine
 from inputforge.core.events import EngineEvent, EventKind
+from inputforge.i18n import LANGUAGES, current_language, tr
 from inputforge.platform.base import Platform
 from inputforge.ui.describe import MODE_LABELS
 from inputforge.ui.macro_editor import MacroEditor
@@ -71,29 +72,29 @@ class SettingsPanel(QWidget):
         f = QFormLayout(self)
         self.name = QComboBox()
         self.name.setEditable(True)
-        f.addRow("Profilname", self.name)
+        f.addRow(tr("Profilname"), self.name)
 
         row = QHBoxLayout()
         self.window_combo = QComboBox()
         self.window_combo.setEditable(True)
         line = self.window_combo.lineEdit()
         assert line is not None
-        line.setPlaceholderText("optional – Teil des Fenstertitels des Spiels")
+        line.setPlaceholderText(tr("optional – Teil des Fenstertitels des Spiels"))
         refresh = QPushButton("↻")
-        refresh.setToolTip("Offene Fenster neu einlesen")
+        refresh.setToolTip(tr("Offene Fenster neu einlesen"))
         refresh.clicked.connect(self._refresh_windows)
         row.addWidget(self.window_combo, 1)
         row.addWidget(refresh)
-        f.addRow("Zielfenster", row)
-        self.focus = QCheckBox("Hotkeys nur auslösen, wenn das Zielfenster aktiv ist")
+        f.addRow(tr("Zielfenster"), row)
+        self.focus = QCheckBox(tr("Hotkeys nur auslösen, wenn das Zielfenster aktiv ist"))
         f.addRow("", self.focus)
         self.stop_key = HotkeyEdit()
         self.stop_key.recording_changed.connect(pause_hotkeys)
-        f.addRow("Notaus (alle stoppen)", self.stop_key)
+        f.addRow(tr("Notaus (alle stoppen)"), self.stop_key)
         self.arm_key = HotkeyEdit()
         self.arm_key.recording_changed.connect(pause_hotkeys)
-        f.addRow("Hotkeys an/aus", self.arm_key)
-        self.notify = QCheckBox("Einblendungen anzeigen (z. B. „NICHT GEFUNDEN“)")
+        f.addRow(tr("Hotkeys an/aus"), self.arm_key)
+        self.notify = QCheckBox(tr("Einblendungen anzeigen (z. B. „NICHT GEFUNDEN“)"))
         f.addRow("", self.notify)
 
         name_edit = self.name.lineEdit()
@@ -132,7 +133,7 @@ class SettingsPanel(QWidget):
         if self._loading or self.profile is None:
             return
         p = self.profile
-        p.name = self.name.currentText().strip() or "Profil"
+        p.name = self.name.currentText().strip() or tr("Profil")
         s = p.settings
         s.target_window = self.window_combo.currentText().strip()
         s.require_window_focus = self.focus.isChecked()
@@ -181,21 +182,24 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------ Aufbau
     def _build_ui(self) -> None:
-        tb = QToolBar("Werkzeuge")
+        tb = QToolBar(tr("Werkzeuge"))
         tb.setMovable(False)
         self.addToolBar(tb)
-        self.act_new = QAction("Neu", self, shortcut=QKeySequence(QKeySequence.StandardKey.New))
+        self.act_new = QAction(
+            tr("Neues Profil"), self, shortcut=QKeySequence(QKeySequence.StandardKey.New)
+        )
+        self.act_new.setToolTip(tr("Neues, leeres Profil anlegen (Strg+N)"))
         self.act_open = QAction(
-            "Öffnen…", self, shortcut=QKeySequence(QKeySequence.StandardKey.Open)
+            tr("Profil öffnen…"), self, shortcut=QKeySequence(QKeySequence.StandardKey.Open)
         )
         self.act_save = QAction(
-            "Speichern", self, shortcut=QKeySequence(QKeySequence.StandardKey.Save)
+            tr("Speichern"), self, shortcut=QKeySequence(QKeySequence.StandardKey.Save)
         )
         self.act_save_as = QAction(
-            "Speichern unter…", self, shortcut=QKeySequence(QKeySequence.StandardKey.SaveAs)
+            tr("Speichern unter…"), self, shortcut=QKeySequence(QKeySequence.StandardKey.SaveAs)
         )
-        self.act_armed = QAction("Hotkeys aktiv", self, checkable=True, checked=True)
-        self.act_stop = QAction("■ Alle stoppen", self)
+        self.act_armed = QAction(tr("Hotkeys aktiv"), self, checkable=True, checked=True)
+        self.act_stop = QAction(tr("■ Alle stoppen"), self)
         for a in (self.act_new, self.act_open, self.act_save, self.act_save_as):
             tb.addAction(a)
         tb.addSeparator()
@@ -208,28 +212,45 @@ class MainWindow(QMainWindow):
         self.act_armed.toggled.connect(self.engine.set_armed)
         self.act_stop.triggered.connect(self.engine.stop_all)
 
-        menu = self.menuBar().addMenu("&Datei")
+        menu = self.menuBar().addMenu(tr("&Datei"))
         for a in (self.act_new, self.act_open, self.act_save, self.act_save_as):
             menu.addAction(a)
-        self.recent_menu = menu.addMenu("Zuletzt geöffnet")
+        self.recent_menu = menu.addMenu(tr("Zuletzt geöffnet"))
         menu.addSeparator()
-        quit_act = menu.addAction("Beenden")
+        quit_act = menu.addAction(tr("Beenden"))
         quit_act.triggered.connect(self._quit)
-        help_menu = self.menuBar().addMenu("&Hilfe")
-        help_menu.addAction("Über", self._about)
+        # Englischer Zusatz, damit man das Menü auch ohne Deutschkenntnisse findet.
+        lang_title = tr("&Sprache") + ("" if current_language() == "en" else " / Language")
+        lang_menu = self.menuBar().addMenu(lang_title)
+        lang_group = QActionGroup(self)
+        choices: list[tuple[str | None, str]] = [(None, tr("Automatisch (Systemsprache)"))]
+        choices += list(LANGUAGES.items())
+        for code, label in choices:
+            act = lang_menu.addAction(label)
+            act.setCheckable(True)
+            act.setChecked(self.app_settings.language == code)
+            act.setActionGroup(lang_group)
+            act.triggered.connect(lambda _=False, c=code: self._set_language(c))
+            if code is None:
+                lang_menu.addSeparator()
+        help_menu = self.menuBar().addMenu(tr("&Hilfe"))
+        help_menu.addAction(tr("Über"), self._about)
 
         # Links: Makroliste
         left = QWidget()
         ll = QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
-        ll.addWidget(QLabel("<b>Makros</b>"))
+        ll.addWidget(QLabel(tr("<b>Makros</b>")))
         self.macro_list = QListWidget()
         self.macro_list.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         ll.addWidget(self.macro_list, 1)
         btns = QHBoxLayout()
-        self.btn_add = QPushButton("+ Neu")
-        self.btn_dup = QPushButton("Duplizieren")
-        self.btn_del = QPushButton("Löschen")
+        self.btn_add = QPushButton(tr("+ Neues Makro"))
+        self.btn_add.setToolTip(tr("Neues Makro zu diesem Profil hinzufügen"))
+        self.btn_dup = QPushButton(tr("Duplizieren"))
+        self.btn_dup.setToolTip(tr("Ausgewähltes Makro duplizieren"))
+        self.btn_del = QPushButton(tr("Löschen"))
+        self.btn_del.setToolTip(tr("Ausgewähltes Makro löschen"))
         for b in (self.btn_add, self.btn_dup, self.btn_del):
             btns.addWidget(b)
         ll.addLayout(btns)
@@ -247,11 +268,11 @@ class MainWindow(QMainWindow):
         self.settings_panel = SettingsPanel(self.platform, self._pause_hotkeys)
         self.settings_panel.changed.connect(self._mark_dirty)
         self.tabs = QTabWidget()
-        self.tabs.addTab(self.editor, "Makro")
-        self.tabs.addTab(self.settings_panel, "Profil-Einstellungen")
+        self.tabs.addTab(self.editor, tr("Makro"))
+        self.tabs.addTab(self.settings_panel, tr("Profil-Einstellungen"))
 
         self.log_panel = LogPanel()
-        debug_box = QCheckBox("Debug-Ausgaben")
+        debug_box = QCheckBox(tr("Debug-Ausgaben"))
         debug_box.toggled.connect(lambda v: setattr(self.log_panel, "show_debug", v))
 
         right = QSplitter(Qt.Orientation.Vertical)
@@ -260,7 +281,7 @@ class MainWindow(QMainWindow):
         lw = QVBoxLayout(log_w)
         lw.setContentsMargins(0, 0, 0, 0)
         head = QHBoxLayout()
-        head.addWidget(QLabel("<b>Protokoll</b>"))
+        head.addWidget(QLabel(tr("<b>Protokoll</b>")))
         head.addStretch()
         head.addWidget(debug_box)
         lw.addLayout(head)
@@ -286,11 +307,11 @@ class MainWindow(QMainWindow):
         self.tray = QSystemTrayIcon(app_icon(), self)
         self.tray.setToolTip(APP_NAME)
         menu = QMenu()
-        menu.addAction("Anzeigen", self._show_from_tray)
+        menu.addAction(tr("Anzeigen"), self._show_from_tray)
         menu.addAction(self.act_armed)
         menu.addAction(self.act_stop)
         menu.addSeparator()
-        menu.addAction("Beenden", self._quit)
+        menu.addAction(tr("Beenden"), self._quit)
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(
             lambda reason: (
@@ -328,7 +349,7 @@ class MainWindow(QMainWindow):
                 self._set_profile(load_profile(Path(last)), Path(last))
                 return
             except ProfileError as exc:
-                self._log(f"Letztes Profil nicht ladbar: {exc}", logging.ERROR)
+                self._log(tr("Letztes Profil nicht ladbar: {error}", error=exc), logging.ERROR)
         default = self.store.default_profile_path()
         if default.is_file():
             try:
@@ -336,7 +357,7 @@ class MainWindow(QMainWindow):
                 return
             except ProfileError as exc:
                 self._log(str(exc), logging.ERROR)
-        self._set_profile(Profile(name="Standard"), None)
+        self._set_profile(Profile(name=tr("Standard")), None)
 
     def _set_profile(self, profile: Profile, path: Path | None) -> None:
         self.profile = profile
@@ -356,8 +377,8 @@ class MainWindow(QMainWindow):
             return True
         res = QMessageBox.question(
             self,
-            "Ungespeicherte Änderungen",
-            "Änderungen am Profil speichern?",
+            tr("Ungespeicherte Änderungen"),
+            tr("Änderungen am Profil speichern?"),
             QMessageBox.StandardButton.Save
             | QMessageBox.StandardButton.Discard
             | QMessageBox.StandardButton.Cancel,
@@ -370,7 +391,7 @@ class MainWindow(QMainWindow):
 
     def _new_profile(self) -> None:
         if self._maybe_save_changes():
-            self._set_profile(Profile(), None)
+            self._set_profile(Profile(name=tr("Neues Profil")), None)
 
     def _open_profile(self, path: str | None = None) -> None:
         if not self._maybe_save_changes():
@@ -378,14 +399,17 @@ class MainWindow(QMainWindow):
         if not path:
             self.store.ensure()
             path, _ = QFileDialog.getOpenFileName(
-                self, "Profil öffnen", str(self.store.profiles_dir), "InputForge-Profil (*.json)"
+                self,
+                tr("Profil öffnen"),
+                str(self.store.profiles_dir),
+                tr("InputForge-Profil (*.json)"),
             )
         if not path:
             return
         try:
             self._set_profile(load_profile(Path(path)), Path(path))
         except ProfileError as exc:
-            QMessageBox.critical(self, "Profil laden", str(exc))
+            QMessageBox.critical(self, tr("Profil laden"), str(exc))
 
     def _save(self) -> bool:
         if self.profile_path is None:
@@ -393,18 +417,18 @@ class MainWindow(QMainWindow):
         try:
             save_profile(self.profile, self.profile_path)
         except ProfileError as exc:
-            QMessageBox.critical(self, "Speichern", str(exc))
+            QMessageBox.critical(self, tr("Speichern"), str(exc))
             return False
         self.dirty = False
         self._update_title()
-        self._log(f"Gespeichert: {self.profile_path}")
+        self._log(tr("Gespeichert: {path}", path=self.profile_path))
         return True
 
     def _save_as(self) -> bool:
         self.store.ensure()
         suggestion = self.store.profiles_dir / f"{self.profile.name}.json"
         path, _ = QFileDialog.getSaveFileName(
-            self, "Profil speichern", str(suggestion), "InputForge-Profil (*.json)"
+            self, tr("Profil speichern"), str(suggestion), tr("InputForge-Profil (*.json)")
         )
         if not path:
             return False
@@ -446,9 +470,10 @@ class MainWindow(QMainWindow):
     @staticmethod
     def _macro_label(m: Macro, running: bool) -> str:
         trig = ", ".join(t.upper() for t in m.triggers) or "—"
-        mode = MODE_LABELS[m.mode].split(" (")[0]
+        mode = tr(MODE_LABELS[m.mode]).split(" (")[0]
         dot = "● " if running else ""
-        return f"{dot}{m.name}   [{trig}]\n   {mode} · {len(m.steps)} Schritte"
+        steps = tr("{n} Schritte", n=len(m.steps))
+        return f"{dot}{m.name}   [{trig}]\n   {mode} · {steps}"
 
     def _current_macro(self) -> Macro | None:
         row = self.macro_list.currentRow()
@@ -461,7 +486,7 @@ class MainWindow(QMainWindow):
             self.tabs.setCurrentWidget(self.editor)
 
     def _add_macro(self) -> None:
-        self.profile.macros.append(Macro(name=f"Makro {len(self.profile.macros) + 1}"))
+        self.profile.macros.append(Macro(name=tr("Makro {n}", n=len(self.profile.macros) + 1)))
         self._refresh_macro_list(select=len(self.profile.macros) - 1)
         self._mark_dirty()
 
@@ -470,7 +495,8 @@ class MainWindow(QMainWindow):
         if m is None:
             return
         copy = m.model_copy(
-            deep=True, update={"id": _new_id(), "name": f"{m.name} (Kopie)", "triggers": []}
+            deep=True,
+            update={"id": _new_id(), "name": tr("{name} (Kopie)", name=m.name), "triggers": []},
         )
         idx = self.profile.macros.index(m) + 1
         self.profile.macros.insert(idx, copy)
@@ -486,14 +512,13 @@ class MainWindow(QMainWindow):
             for o in self.profile.macros
             if any(isinstance(s, RunMacroAction) and s.macro_id == m.id for s in o.steps)
         ]
-        msg = f"Makro „{m.name}“ löschen?"
+        msg = tr("Makro „{name}“ löschen?", name=m.name)
         if users:
-            msg += (
-                "\n\nAchtung: Wird verwendet von: "
-                + ", ".join(users)
-                + "\nDiese Schritte werden ebenfalls entfernt."
+            msg += "\n\n" + tr(
+                "Achtung: Wird verwendet von: {users}\nDiese Schritte werden ebenfalls entfernt.",
+                users=", ".join(users),
             )
-        if QMessageBox.question(self, "Löschen", msg) != QMessageBox.StandardButton.Yes:
+        if QMessageBox.question(self, tr("Makro löschen"), msg) != QMessageBox.StandardButton.Yes:
             return
         row = self.profile.macros.index(m)
         del self.profile.macros[row]
@@ -533,8 +558,8 @@ class MainWindow(QMainWindow):
         self._mark_dirty()
 
     def _test_macro(self, macro_id: str) -> None:
-        self._log("Test startet in 3 s – jetzt ins Spiel wechseln …")
-        self.toast.show_message("Test in 3 s …", 2500)
+        self._log(tr("Test startet in 3 s – jetzt ins Spiel wechseln …"))
+        self.toast.show_message(tr("Test in 3 s …"), 2500)
         self._apply_to_engine()
         QTimer.singleShot(3000, lambda: self.engine.trigger(macro_id))
 
@@ -549,7 +574,7 @@ class MainWindow(QMainWindow):
         try:
             validated = Profile.model_validate(self.profile.model_dump())
         except ValueError as exc:
-            self._log(f"Profil ungültig, nicht übernommen: {exc}", logging.ERROR)
+            self._log(tr("Profil ungültig, nicht übernommen: {error}", error=exc), logging.ERROR)
             return
         self.engine.load(validated, base)
 
@@ -565,7 +590,7 @@ class MainWindow(QMainWindow):
             self.act_armed.setChecked(self.engine.armed)
             self.act_armed.blockSignals(False)
             if not self._paused_for_recording:
-                self.toast.show_message(f"Hotkeys: {ev.message}", 1000)
+                self.toast.show_message(tr("Hotkeys: {state}", state=ev.message), 1000)
             self._update_status()
 
     def _refresh_running(self) -> None:
@@ -587,19 +612,19 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------ Status
     def _update_title(self) -> None:
-        name = self.profile_path.name if self.profile_path else "nicht gespeichert"
+        name = self.profile_path.name if self.profile_path else tr("nicht gespeichert")
         star = " *" if self.dirty else ""
         self.setWindowTitle(f"{APP_NAME} {__version__} – {self.profile.name} ({name}){star}")
 
     def _update_status(self) -> None:
         p = self.platform
-        parts = [f"Plattform: {p.name}"]
+        parts = [tr("Plattform: {name}", name=p.name)]
         parts += [f"⚠ {note}" for note in p.limitations]
         if p.name == "Windows":
-            parts.append("Admin" if p.is_admin else "kein Admin")
+            parts.append(tr("Admin") if p.is_admin else tr("kein Admin"))
         self.status_platform.setText("  ·  ".join(parts))
         armed = self.engine.armed
-        self.status_armed.setText("● Hotkeys AKTIV" if armed else "○ Hotkeys pausiert")
+        self.status_armed.setText(tr("● Hotkeys AKTIV") if armed else tr("○ Hotkeys pausiert"))
         self.status_armed.setStyleSheet(f"color: {'#4cd964' if armed else '#ffb347'}")
         if self.tray is not None:
             self.tray.setIcon(app_icon(active=armed))
@@ -607,9 +632,21 @@ class MainWindow(QMainWindow):
     def _about(self) -> None:
         QMessageBox.about(
             self,
-            f"Über {APP_NAME}",
-            f"<b>{APP_NAME} {__version__}</b><br>Makros, Hotkeys und Bildsuche für Spiele.<br><br>"
-            f"Profile: {self.store.profiles_dir}",
+            tr("Über {app}", app=APP_NAME),
+            f"<b>{APP_NAME} {__version__}</b><br>"
+            + tr("Makros, Hotkeys und Bildsuche für Spiele.")
+            + "<br><br>"
+            + tr("Profile: {path}", path=self.store.profiles_dir),
+        )
+
+    def _set_language(self, code: str | None) -> None:
+        self.app_settings.language = code
+        self.store.save_settings(self.app_settings)
+        QMessageBox.information(
+            self,
+            APP_NAME,
+            tr("Die Sprache wird nach einem Neustart von InputForge übernommen.")
+            + "\n\nThe language will change after restarting InputForge.",
         )
 
     # ------------------------------------------------------------------ Fenster
@@ -624,7 +661,7 @@ class MainWindow(QMainWindow):
             self.hide()
             self.tray.showMessage(
                 APP_NAME,
-                "Läuft im Hintergrund weiter. Beenden über das Tray-Menü.",
+                tr("Läuft im Hintergrund weiter. Beenden über das Tray-Menü."),
                 QSystemTrayIcon.MessageIcon.Information,
                 2500,
             )

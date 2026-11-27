@@ -12,6 +12,7 @@ from inputforge.config.models import Macro, Profile, RunMode
 from inputforge.core.events import EngineEvent, EventKind, EventSink
 from inputforge.core.keys import MODIFIER_OF, Hotkey, is_mouse, parse_hotkey
 from inputforge.core.runner import Grabber, MacroRun, RunContext
+from inputforge.i18n import tr
 from inputforge.platform.base import InputEvent, Platform
 from inputforge.vision.matcher import TemplateCache
 
@@ -99,7 +100,7 @@ class Engine:
     def start(self) -> None:
         self.platform.hook.start(self.handle_input, mouse=self.needs_mouse_hook())
         self._hook_running = True
-        self._emit(EventKind.LOG, f"Hotkeys aktiv ({len(self._bindings)} Bindungen)")
+        self._emit(EventKind.LOG, tr("Hotkeys aktiv ({n} Bindungen)", n=len(self._bindings)))
 
     def shutdown(self) -> None:
         self.stop_all()
@@ -110,7 +111,7 @@ class Engine:
         self._armed = armed
         if not armed:
             self.stop_all()
-        self._emit(EventKind.ARMED, "Scharf" if armed else "Pausiert")
+        self._emit(EventKind.ARMED, tr("Scharf") if armed else tr("Pausiert"))
 
     def stop_all(self) -> None:
         with self._lock:
@@ -152,7 +153,7 @@ class Engine:
         mods = frozenset(MODIFIER_OF[k] for k in self._down if k in MODIFIER_OF)
 
         if self._stop_hotkey and self._stop_hotkey.matches(key, mods, wildcard=False):
-            self._emit(EventKind.LOG, "Notaus – alle Makros gestoppt", notify=True)
+            self._emit(EventKind.LOG, tr("Notaus – alle Makros gestoppt"), notify=True)
             threading.Thread(target=self.stop_all, daemon=True).start()
             return self._mark_suppressed(key)
         if self._arm_hotkey and self._arm_hotkey.matches(key, mods, wildcard=False):

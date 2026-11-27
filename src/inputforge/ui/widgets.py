@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 
 from inputforge.core.events import EngineEvent
 from inputforge.core.keys import VK_TO_NAME, KeyParseError, parse_chord, parse_hotkey
+from inputforge.i18n import tr
 
 
 # --------------------------------------------------------------------------------------
@@ -198,9 +199,9 @@ class HotkeyEdit(QWidget):
         self.chord = chord
         self.edit = QLineEdit(text)
         self.edit.setPlaceholderText(
-            "z. B. ctrl+shift+1" if chord else "z. B. f1, ctrl+f2, xbutton1"
+            tr("z. B. ctrl+shift+1") if chord else tr("z. B. f1, ctrl+f2, xbutton1")
         )
-        self.button = QPushButton("Aufnehmen")
+        self.button = QPushButton(tr("Aufnehmen"))
         self.button.setCheckable(True)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -240,13 +241,13 @@ class HotkeyEdit(QWidget):
             self._filter.captured.connect(self._on_captured)
             self._filter.cancelled.connect(lambda: self.button.setChecked(False))
             app.installEventFilter(self._filter)
-            self.button.setText("Taste drücken… (Esc)")
+            self.button.setText(tr("Taste drücken… (Esc)"))
             self.edit.setFocus()
         else:
             if self._filter is not None:
                 app.removeEventFilter(self._filter)
                 self._filter = None
-            self.button.setText("Aufnehmen")
+            self.button.setText(tr("Aufnehmen"))
         self.recording_changed.emit(on)
 
     def _on_captured(self, text: str) -> None:

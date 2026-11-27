@@ -6,6 +6,16 @@ Alle relevanten Änderungen an diesem Projekt. Format nach
 
 ## [Unreleased]
 
+### Hinzugefügt
+- Englische Oberfläche. Die Sprache folgt der Systemsprache und lässt sich über das Menü
+  „Sprache / Language“ festlegen (wirksam nach Neustart). Auch CLI-, Protokoll- und
+  Validierungsmeldungen sowie die Qt-Standardknöpfe sind übersetzt.
+
+### Geändert
+- Eindeutige Beschriftungen: „Neu“ in der Werkzeugleiste heißt jetzt „Neues Profil“
+  (dazu „Profil öffnen…“), der Knopf unter der Makroliste „+ Neues Makro“. Die Knöpfe zum
+  Duplizieren und Löschen von Makros und Schritten haben Tooltips.
+
 ## [0.1.0] – 2026-11-24
 
 ### Hinzugefügt

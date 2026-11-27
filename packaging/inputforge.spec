@@ -36,7 +36,11 @@ a = Analysis(
     [str(ROOT / "packaging" / "entry_gui.py")],
     pathex=[str(ROOT / "src")],
     datas=[(str(ROOT / "examples"), "examples")],
-    hiddenimports=["inputforge.platform.win32", "inputforge.platform.x11"],
+    hiddenimports=[
+        "inputforge.platform.win32",
+        "inputforge.platform.x11",
+        "inputforge.locales.en",  # per importlib geladen (i18n.set_language)
+    ],
     excludes=["tkinter", "matplotlib", *QT_EXCLUDES],
     noarchive=False,
 )

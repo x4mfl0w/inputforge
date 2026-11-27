@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 )
 
 from inputforge.config.models import Macro, RunMode
+from inputforge.i18n import tr
 from inputforge.ui.describe import ACTION_LABELS, MODE_LABELS, describe
 from inputforge.ui.step_dialog import EditorContext, edit_step
 from inputforge.ui.widgets import HotkeyEdit, ms_spin
@@ -38,9 +39,9 @@ from inputforge.ui.widgets import HotkeyEdit, ms_spin
 class _HotkeyDialog(QDialog):
     def __init__(self, ctx: EditorContext, parent: QWidget) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Trigger hinzufügen")
+        self.setWindowTitle(tr("Trigger hinzufügen"))
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Taste, Kombination oder Maustaste (Mitte/4/5/Rad) drücken:"))
+        lay.addWidget(QLabel(tr("Taste, Kombination oder Maustaste (Mitte/4/5/Rad) drücken:")))
         self.edit = HotkeyEdit()
         self.edit.recording_changed.connect(ctx.pause_hotkeys)
         lay.addWidget(self.edit)
@@ -56,7 +57,7 @@ class _HotkeyDialog(QDialog):
         if self.edit.is_valid():
             self.accept()
         else:
-            QMessageBox.warning(self, "Ungültig", "Unbekannte Taste oder Kombination.")
+            QMessageBox.warning(self, tr("Ungültig"), tr("Unbekannte Taste oder Kombination."))
 
 
 class MacroEditor(QWidget):
@@ -72,52 +73,53 @@ class MacroEditor(QWidget):
         root = QVBoxLayout(self)
 
         # --- Grunddaten / Trigger --------------------------------------------------
-        top = QGroupBox("Makro")
+        top = QGroupBox(tr("Makro"))
         f = QFormLayout(top)
         self.name = QLineEdit()
-        f.addRow("Name", self.name)
-        self.enabled = QCheckBox("Aktiv")
+        f.addRow(tr("Name"), self.name)
+        self.enabled = QCheckBox(tr("Aktiv"))
         f.addRow("", self.enabled)
 
         trig_row = QHBoxLayout()
         self.triggers = QListWidget()
         self.triggers.setMaximumHeight(70)
         trig_buttons = QVBoxLayout()
-        self.add_trigger = QPushButton("+ Trigger")
-        self.del_trigger = QPushButton("Entfernen")
+        self.add_trigger = QPushButton(tr("+ Trigger"))
+        self.add_trigger.setToolTip(tr("Neuen Trigger (Hotkey) für dieses Makro hinzufügen"))
+        self.del_trigger = QPushButton(tr("Entfernen"))
         trig_buttons.addWidget(self.add_trigger)
         trig_buttons.addWidget(self.del_trigger)
         trig_buttons.addStretch()
         trig_row.addWidget(self.triggers, 1)
         trig_row.addLayout(trig_buttons)
-        f.addRow("Trigger", trig_row)
-        self.passthrough = QCheckBox("Trigger an das Spiel durchlassen")
+        f.addRow(tr("Trigger"), trig_row)
+        self.passthrough = QCheckBox(tr("Trigger an das Spiel durchlassen"))
         self.wildcard = QCheckBox(
-            "Auch mit zusätzlich gehaltenen Modifiern auslösen (Shift/Strg/…)"
+            tr("Auch mit zusätzlich gehaltenen Modifiern auslösen (Shift/Strg/…)")
         )
         f.addRow("", self.passthrough)
         f.addRow("", self.wildcard)
         root.addWidget(top)
 
         # --- Laufmodus -------------------------------------------------------------
-        run = QGroupBox("Ausführung")
+        run = QGroupBox(tr("Ausführung"))
         rf = QFormLayout(run)
         self.mode = QComboBox()
         for mode, label in MODE_LABELS.items():
-            self.mode.addItem(label, mode)
-        rf.addRow("Modus", self.mode)
+            self.mode.addItem(tr(label), mode)
+        rf.addRow(tr("Modus"), self.mode)
         self.interval = ms_spin(3_600_000)
-        rf.addRow("Pause zwischen Durchläufen", self.interval)
+        rf.addRow(tr("Pause zwischen Durchläufen"), self.interval)
         self.repeat = QSpinBox()
         self.repeat.setRange(0, 1_000_000)
-        self.repeat.setSpecialValueText("unbegrenzt")
-        rf.addRow("Max. Durchläufe", self.repeat)
+        self.repeat.setSpecialValueText(tr("unbegrenzt"))
+        rf.addRow(tr("Max. Durchläufe"), self.repeat)
         self.duration = QDoubleSpinBox()
         self.duration.setRange(0, 86_400)
         self.duration.setDecimals(1)
         self.duration.setSuffix(" s")
-        self.duration.setSpecialValueText("unbegrenzt")
-        rf.addRow("Max. Dauer", self.duration)
+        self.duration.setSpecialValueText(tr("unbegrenzt"))
+        rf.addRow(tr("Max. Dauer"), self.duration)
         self.mode_hint = QLabel()
         self.mode_hint.setWordWrap(True)
         self.mode_hint.setStyleSheet("color: #999")
@@ -125,7 +127,7 @@ class MacroEditor(QWidget):
         root.addWidget(run)
 
         # --- Schritte --------------------------------------------------------------
-        steps = QGroupBox("Schritte")
+        steps = QGroupBox(tr("Schritte"))
         sl = QVBoxLayout(steps)
         self.steps = QListWidget()
         self.steps.setDragDropMode(QListWidget.DragDropMode.InternalMove)
@@ -133,20 +135,26 @@ class MacroEditor(QWidget):
         sl.addWidget(self.steps, 1)
         bar = QHBoxLayout()
         self.add_step = QToolButton()
-        self.add_step.setText("+ Schritt")
+        self.add_step.setText(tr("+ Schritt"))
+        self.add_step.setToolTip(tr("Neuen Schritt zu diesem Makro hinzufügen"))
         self.add_step.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(self)
         for kind, label in ACTION_LABELS.items():
-            act = QAction(label, menu)
+            act = QAction(tr(label), menu)
             act.triggered.connect(lambda _=False, k=kind: self._add_step(k))
             menu.addAction(act)
         self.add_step.setMenu(menu)
-        self.edit_step_btn = QPushButton("Bearbeiten")
-        self.dup_step = QPushButton("Duplizieren")
+        self.edit_step_btn = QPushButton(tr("Bearbeiten"))
+        self.edit_step_btn.setToolTip(tr("Ausgewählten Schritt bearbeiten"))
+        self.dup_step = QPushButton(tr("Duplizieren"))
+        self.dup_step.setToolTip(tr("Ausgewählten Schritt duplizieren"))
         self.up_step = QPushButton("▲")
         self.down_step = QPushButton("▼")
-        self.del_step = QPushButton("Löschen")
-        self.test_btn = QPushButton("▶ Testen (3 s)")
+        self.del_step = QPushButton(tr("Löschen"))
+        self.del_step.setToolTip(tr("Ausgewählten Schritt löschen"))
+        self.up_step.setToolTip(tr("Schritt nach oben"))
+        self.down_step.setToolTip(tr("Schritt nach unten"))
+        self.test_btn = QPushButton(tr("▶ Testen (3 s)"))
         for w in (
             self.add_step,
             self.edit_step_btn,
@@ -162,7 +170,7 @@ class MacroEditor(QWidget):
         root.addWidget(steps, 1)
 
         # --- Signale ---------------------------------------------------------------
-        self.name.textEdited.connect(lambda t: self._set("name", t or "Unbenannt"))
+        self.name.textEdited.connect(lambda t: self._set("name", t or tr("Unbenannt")))
         self.enabled.toggled.connect(lambda v: self._set("enabled", v))
         self.passthrough.toggled.connect(lambda v: self._set("passthrough", v))
         self.wildcard.toggled.connect(lambda v: self._set("wildcard", v))
@@ -200,7 +208,9 @@ class MacroEditor(QWidget):
             self.passthrough.setToolTip(
                 ""
                 if can_suppress
-                else "Auf dieser Plattform nicht möglich – der Trigger erreicht das Spiel immer."
+                else tr(
+                    "Auf dieser Plattform nicht möglich – der Trigger erreicht das Spiel immer."
+                )
             )
             self.wildcard.setChecked(macro.wildcard)
             self.mode.setCurrentIndex(self.mode.findData(macro.mode))
@@ -219,7 +229,7 @@ class MacroEditor(QWidget):
         for t in self.macro.triggers:
             self.triggers.addItem(t)
         if not self.macro.triggers:
-            item = QListWidgetItem("(kein Trigger – nur über „Anderes Makro ausführen“)")
+            item = QListWidgetItem(tr("(kein Trigger – nur über „Anderes Makro ausführen“)"))
             item.setFlags(Qt.ItemFlag.NoItemFlags)
             self.triggers.addItem(item)
 
@@ -249,7 +259,7 @@ class MacroEditor(QWidget):
         try:
             setattr(self.macro, field, value)
         except ValidationError as exc:
-            QMessageBox.warning(self, "Ungültig", str(exc.errors()[0]["msg"]))
+            QMessageBox.warning(self, tr("Ungültig"), str(exc.errors()[0]["msg"]))
             return
         self.changed.emit()
 
@@ -283,13 +293,18 @@ class MacroEditor(QWidget):
         for w in (self.interval, self.repeat, self.duration):
             w.setEnabled(looping)
         hints = {
-            RunMode.ONCE: "Trigger drücken → Schritte laufen einmal. Während des Laufs wird "
-            "ein erneuter Druck ignoriert.",
-            RunMode.TOGGLE: "1. Druck startet die Schleife, 2. Druck stoppt sie. Ideal für "
-            "„alle X ms Taste drücken“ (Pause zwischen Durchläufen = Intervall).",
-            RunMode.HOLD: "Schleife läuft, solange der Trigger gehalten wird.",
-            RunMode.REPEAT: "Ein Druck → bis zu „Max. Durchläufe“ bzw. „Max. Dauer“. "
-            "Erneuter Druck bricht ab.",
+            RunMode.ONCE: tr(
+                "Trigger drücken → Schritte laufen einmal. Während des Laufs wird "
+                "ein erneuter Druck ignoriert."
+            ),
+            RunMode.TOGGLE: tr(
+                "1. Druck startet die Schleife, 2. Druck stoppt sie. Ideal für "
+                "„alle X ms Taste drücken“ (Pause zwischen Durchläufen = Intervall)."
+            ),
+            RunMode.HOLD: tr("Schleife läuft, solange der Trigger gehalten wird."),
+            RunMode.REPEAT: tr(
+                "Ein Druck → bis zu „Max. Durchläufe“ bzw. „Max. Dauer“. Erneuter Druck bricht ab."
+            ),
         }
         self.mode_hint.setText(hints[mode])
 

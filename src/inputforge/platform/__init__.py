@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 
+from inputforge.i18n import tr
 from inputforge.platform.base import (
     INJECT_MARKER,
     InputBackend,
@@ -29,7 +30,7 @@ def _null(name: str, reason: str) -> Platform:
 
     log.warning("%s – Eingaben deaktiviert", reason)
     return Platform(
-        name=f"{name} (ohne Eingabe)",
+        name=tr("{name} (ohne Eingabe)", name=name),
         backend=fallback.NullBackend(),
         hook=fallback.NullHook(),
         windows=fallback.NullWindowManager(),
@@ -55,9 +56,9 @@ def create_platform() -> Platform:
     if sys.platform.startswith("linux"):
         session = os.environ.get("XDG_SESSION_TYPE", "").lower()
         if session == "wayland":
-            return _null("Linux/Wayland", "Wayland wird nicht unterstützt – bitte X11-Sitzung")
+            return _null("Linux/Wayland", tr("Wayland wird nicht unterstützt – bitte X11-Sitzung"))
         if not os.environ.get("DISPLAY"):
-            return _null("Linux", "Kein X11-Display (DISPLAY nicht gesetzt)")
+            return _null("Linux", tr("Kein X11-Display (DISPLAY nicht gesetzt)"))
         try:
             from inputforge.platform import x11
 
@@ -70,13 +71,13 @@ def create_platform() -> Platform:
                 game_ready=True,
                 is_admin=os.geteuid() == 0,
                 limitations=[
-                    "Trigger werden nicht abgefangen – das Spiel erhält die Taste ebenfalls",
+                    tr("Trigger werden nicht abgefangen – das Spiel erhält die Taste ebenfalls"),
                 ],
             )
         except Exception as exc:
-            return _null("Linux", f"X11 nicht nutzbar: {exc}")
+            return _null("Linux", tr("X11 nicht nutzbar: {error}", error=exc))
 
-    return _null(sys.platform, f"Plattform {sys.platform} wird nicht unterstützt")
+    return _null(sys.platform, tr("Plattform {name} wird nicht unterstützt", name=sys.platform))
 
 
 __all__ = [

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from inputforge import APP_NAME
 from inputforge.config.models import SCHEMA_VERSION, Profile
+from inputforge.i18n import tr
 
 
 class ProfileError(Exception):
@@ -23,8 +24,12 @@ def _migrate(data: dict[str, Any]) -> dict[str, Any]:
     version = data.get("schema_version", 1)
     if version > SCHEMA_VERSION:
         raise ProfileError(
-            f"Profil hat Schema-Version {version}, unterstützt wird bis {SCHEMA_VERSION}. "
-            "Bitte InputForge aktualisieren."
+            tr(
+                "Profil hat Schema-Version {version}, unterstützt wird bis {supported}. "
+                "Bitte InputForge aktualisieren.",
+                version=version,
+                supported=SCHEMA_VERSION,
+            )
         )
     # Zukünftige Migrationen: if version < 2: ...; data["schema_version"] = 2
     return data
@@ -38,7 +43,7 @@ def load_profile(path: Path) -> Profile:
     try:
         return Profile.model_validate(_migrate(data))
     except ValueError as exc:
-        raise ProfileError(f"{path}: ungültiges Profil:\n{exc}") from exc
+        raise ProfileError(tr("{path}: ungültiges Profil:\n{error}", path=path, error=exc)) from exc
 
 
 def save_profile(profile: Profile, path: Path) -> None:
@@ -61,6 +66,8 @@ class AppSettings(BaseModel):
     start_minimized: bool = False
     window_geometry: str | None = None
     recent_profiles: list[str] = Field(default_factory=list)
+    language: str | None = None
+    """Oberflächensprache (``"de"``, ``"en"``); ``None`` → Systemsprache."""
 
     def remember(self, path: Path) -> None:
         p = str(path)

@@ -49,8 +49,14 @@ def _missing_linux_libs() -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog=APP_NAME)
-    parser.add_argument("profile", nargs="?", help="Profil, das geöffnet werden soll")
-    parser.add_argument("--minimized", action="store_true", help="Im Tray starten")
+    from inputforge.config.storage import ProfileStore
+    from inputforge.i18n import set_language, tr
+
+    store = ProfileStore()
+    lang = set_language(store.load_settings().language)
+
+    parser.add_argument("profile", nargs="?", help=tr("Profil, das geöffnet werden soll"))
+    parser.add_argument("--minimized", action="store_true", help=tr("Im Tray starten"))
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args(argv)
@@ -77,6 +83,14 @@ def main(argv: list[str] | None = None) -> int:
     app.setQuitOnLastWindowClosed(False)
     app.setStyle("Fusion")
 
+    # Qt-eigene Texte (OK/Abbrechen/Speichern …) in der gewählten Sprache.
+    from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+
+    qt_translator = QTranslator(app)
+    qt_dir = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if qt_translator.load(QLocale(lang), "qtbase", "_", qt_dir):
+        app.installTranslator(qt_translator)
+
     # --- Einzelinstanz (wie #SingleInstance): vorhandene Instanz nach vorne holen ----
     server_name = f"{APP_NAME}-{getpass.getuser()}"
     probe = QLocalSocket()
@@ -91,7 +105,6 @@ def main(argv: list[str] | None = None) -> int:
     server = QLocalServer()
     server.listen(server_name)
 
-    from inputforge.config.storage import ProfileStore
     from inputforge.core.engine import Engine
     from inputforge.platform import create_platform
     from inputforge.ui.main_window import MainWindow
@@ -100,7 +113,6 @@ def main(argv: list[str] | None = None) -> int:
     if not platform.game_ready:
         log.warning("Plattform %s: Eingaben in Spielen werden nicht unterstützt", platform.name)
     engine = Engine(platform)
-    store = ProfileStore()
     store.ensure()
 
     try:

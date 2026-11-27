@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from inputforge.i18n import tr
 from inputforge.platform.base import Rect, WindowManager
 from inputforge.vision.matcher import Image
 from inputforge.vision.screen import ScreenGrabber
@@ -136,11 +137,11 @@ class PickerDialog(QDialog):
         self.info = QLabel()
         self.info.setStyleSheet("QLabel { background: #222; color: #eee; padding: 4px 8px; }")
         hint = (
-            "Klicke auf den gewünschten Punkt"
+            tr("Klicke auf den gewünschten Punkt")
             if mode == "point"
-            else "Ziehe einen Rahmen um das Icon (möglichst eng, ohne wechselnden Hintergrund)"
+            else tr("Ziehe einen Rahmen um das Icon (möglichst eng, ohne wechselnden Hintergrund)")
         )
-        self._hint = f"{hint}  ·  Mausrad = Zoom  ·  Esc/Rechtsklick = Abbrechen"
+        self._hint = hint + tr("  ·  Mausrad = Zoom  ·  Esc/Rechtsklick = Abbrechen")
         self.info.setText(self._hint)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -162,8 +163,10 @@ class PickerDialog(QDialog):
         sx, sy = int(pos.x()) + self.origin.x, int(pos.y()) + self.origin.y
         rel = ""
         if self.target_rect is not None:
-            rel = f"  ·  Fenster: ({sx - self.target_rect.x}, {sy - self.target_rect.y})"
-        self.info.setText(f"Bildschirm: ({sx}, {sy}){rel}  ·  {self._hint}")
+            rel = tr(
+                "  ·  Fenster: ({x}, {y})", x=sx - self.target_rect.x, y=sy - self.target_rect.y
+            )
+        self.info.setText(tr("Bildschirm: ({x}, {y})", x=sx, y=sy) + f"{rel}  ·  {self._hint}")
 
     def finish(self, scene_rect: QRectF) -> None:
         h, w = self.shot.shape[:2]
@@ -245,5 +248,5 @@ class _Countdown(QDialog):
             if hasattr(self, "timer"):
                 self.timer.stop()
             return
-        self.label.setText(f"Screenshot in {self.remaining} s – jetzt ins Spiel wechseln …")
+        self.label.setText(tr("Screenshot in {s} s – jetzt ins Spiel wechseln …", s=self.remaining))
         self.remaining -= 1

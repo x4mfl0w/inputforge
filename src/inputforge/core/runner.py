@@ -31,6 +31,7 @@ from inputforge.config.models import (
 )
 from inputforge.core.events import EngineEvent, EventKind, EventSink
 from inputforge.core.keys import parse_chord
+from inputforge.i18n import tr
 from inputforge.platform.base import InputBackend, Platform, Rect
 from inputforge.vision.matcher import Image, TemplateCache, find_template
 
@@ -98,20 +99,22 @@ class MacroRun(threading.Thread):
     def run(self) -> None:
         m = self.macro
         self.ctx.emit(EngineEvent(EventKind.MACRO_STARTED, f"▶ {m.name}", m.id))
-        reason = "fertig"
+        finished = False
+        reason = tr("fertig")
         try:
             self._loop()
+            finished = True
         except StopRequested:
             self.stopped_by_request = True
-            reason = "gestoppt"
+            reason = tr("gestoppt")
         except AbortRun as exc:
-            reason = f"abgebrochen: {exc}"
+            reason = tr("abgebrochen: {error}", error=exc)
         except Exception as exc:
             log.exception("Makro %s fehlgeschlagen", m.name)
-            reason = f"Fehler: {exc}"
+            reason = tr("Fehler: {error}", error=exc)
             self.ctx.emit(EngineEvent(EventKind.ERROR, f"{m.name}: {exc}", m.id, logging.ERROR))
         finally:
-            if reason != "fertig":
+            if not finished:
                 self._release_all()
             self.ctx.emit(
                 EngineEvent(
@@ -221,13 +224,13 @@ class MacroRun(threading.Thread):
         title = self.ctx.profile.settings.target_window
         if not title:
             if required:
-                raise AbortRun("Kein Zielfenster im Profil konfiguriert")
+                raise AbortRun(tr("Kein Zielfenster im Profil konfiguriert"))
             return None
         wm = self.ctx.platform.windows
         handle = wm.find(title)
         rect = wm.client_rect(handle) if handle is not None else None
         if rect is None and required:
-            raise AbortRun(f"Zielfenster '{title}' nicht gefunden")
+            raise AbortRun(tr("Zielfenster '{title}' nicht gefunden", title=title))
         return rect
 
     def _resolve_point(self, x: int, y: int, space: CoordSpace) -> tuple[int, int]:
@@ -261,7 +264,7 @@ class MacroRun(threading.Thread):
             case RunMacroAction():
                 self._do_run_macro(step, depth)
             case _:
-                raise AbortRun(f"Unbekannter Schritt: {step!r}")
+                raise AbortRun(tr("Unbekannter Schritt: {step}", step=repr(step)))
 
     def _do_key(self, a: KeyAction) -> None:
         keys = parse_chord(a.keys)
@@ -281,7 +284,7 @@ class MacroRun(threading.Thread):
                 self.ctx.emit(
                     EngineEvent(
                         EventKind.LOG,
-                        f"Zeichen '{ch}' nicht tippbar – übersprungen",
+                        tr("Zeichen '{ch}' nicht tippbar – übersprungen", ch=ch),
                         self.macro.id,
                         logging.WARNING,
                     )
@@ -304,7 +307,9 @@ class MacroRun(threading.Thread):
             return None
         win = self._target_rect(required=False)
         if self.ctx.profile.settings.target_window and win is None:
-            raise LookupError(f"Zielfenster '{self.ctx.profile.settings.target_window}' fehlt")
+            raise LookupError(
+                tr("Zielfenster '{title}' fehlt", title=self.ctx.profile.settings.target_window)
+            )
         if a.area is SearchArea.WINDOW:
             return win
         assert a.region is not None
@@ -319,7 +324,9 @@ class MacroRun(threading.Thread):
         try:
             template = self.ctx.templates.get(path)
         except (OSError, FileNotFoundError) as exc:
-            self._image_missing(a, f"Bilddatei fehlt: {path.name} ({exc})")
+            self._image_missing(
+                a, tr("Bilddatei fehlt: {name} ({error})", name=path.name, error=exc)
+            )
             return
 
         deadline = time.monotonic() + a.timeout_ms / 1000.0
@@ -339,7 +346,7 @@ class MacroRun(threading.Thread):
             self.sleep_ms(a.retry_interval_ms)
 
         if match is None or origin is None:
-            self._image_missing(a, f"NICHT GEFUNDEN: {path.name}")
+            self._image_missing(a, tr("NICHT GEFUNDEN: {name}", name=path.name))
             return
 
         if a.anchor is Anchor.CENTER:
@@ -350,7 +357,13 @@ class MacroRun(threading.Thread):
         self.ctx.emit(
             EngineEvent(
                 EventKind.IMAGE_FOUND,
-                f"{path.name} gefunden bei ({sx}, {sy}), Score {match.score:.3f}",
+                tr(
+                    "{name} gefunden bei ({x}, {y}), Score {score}",
+                    name=path.name,
+                    x=sx,
+                    y=sy,
+                    score=f"{match.score:.3f}",
+                ),
                 self.macro.id,
                 logging.DEBUG,
             )
@@ -370,14 +383,14 @@ class MacroRun(threading.Thread):
     def _do_activate(self, a: ActivateWindowAction) -> None:
         title = a.title or self.ctx.profile.settings.target_window
         if not title:
-            raise AbortRun("Fenster aktivieren: kein Titel und kein Zielfenster gesetzt")
+            raise AbortRun(tr("Fenster aktivieren: kein Titel und kein Zielfenster gesetzt"))
         wm = self.ctx.platform.windows
         handle = wm.find(title)
         if handle is None or not wm.activate(handle):
             self.ctx.emit(
                 EngineEvent(
                     EventKind.LOG,
-                    f"Fenster '{title}' nicht aktivierbar",
+                    tr("Fenster '{title}' nicht aktivierbar", title=title),
                     self.macro.id,
                     logging.WARNING,
                 )
@@ -386,8 +399,10 @@ class MacroRun(threading.Thread):
 
     def _do_run_macro(self, a: RunMacroAction, depth: int) -> None:
         if depth >= MAX_NESTING:
-            raise AbortRun(f"Maximale Verschachtelung ({MAX_NESTING}) erreicht – Endlosschleife?")
+            raise AbortRun(
+                tr("Maximale Verschachtelung ({n}) erreicht – Endlosschleife?", n=MAX_NESTING)
+            )
         target = self.ctx.profile.macro_by_id(a.macro_id)
         if target is None:
-            raise AbortRun(f"Makro {a.macro_id} existiert nicht")
+            raise AbortRun(tr("Makro {id} existiert nicht", id=a.macro_id))
         self._exec_steps(target, depth + 1)

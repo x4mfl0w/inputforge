@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from inputforge.core.keys import parse_chord, parse_hotkey
+from inputforge.i18n import tr
 
 SCHEMA_VERSION = 1
 
@@ -122,7 +123,7 @@ class MouseClickAction(_ActionBase):
     @model_validator(mode="after")
     def _xy_pair(self) -> MouseClickAction:
         if (self.x is None) != (self.y is None):
-            raise ValueError("x und y müssen beide gesetzt oder beide leer sein")
+            raise ValueError(tr("x und y müssen beide gesetzt oder beide leer sein"))
         return self
 
 
@@ -169,9 +170,9 @@ class ImageClickAction(_ActionBase):
     @model_validator(mode="after")
     def _region_required(self) -> ImageClickAction:
         if self.area is SearchArea.REGION and self.region is None:
-            raise ValueError("area=region benötigt eine region (x, y, w, h)")
+            raise ValueError(tr("area=region benötigt eine region (x, y, w, h)"))
         if self.region is not None and (self.region[2] <= 0 or self.region[3] <= 0):
-            raise ValueError("region muss positive Breite und Höhe haben")
+            raise ValueError(tr("region muss positive Breite und Höhe haben"))
         return self
 
 
@@ -251,7 +252,7 @@ class Macro(_Base):
     @model_validator(mode="after")
     def _repeat_bounds(self) -> Macro:
         if self.mode is RunMode.REPEAT and self.repeat_count == 0 and self.duration_s == 0:
-            raise ValueError("Modus 'repeat' benötigt repeat_count > 0 oder duration_s > 0")
+            raise ValueError(tr("Modus 'repeat' benötigt repeat_count > 0 oder duration_s > 0"))
         return self
 
 
@@ -287,12 +288,16 @@ class Profile(_Base):
     def _check_references(self) -> Profile:
         ids = [m.id for m in self.macros]
         if len(ids) != len(set(ids)):
-            raise ValueError("Makro-IDs müssen eindeutig sein")
+            raise ValueError(tr("Makro-IDs müssen eindeutig sein"))
         known = set(ids)
         for m in self.macros:
             for s in m.steps:
                 if isinstance(s, RunMacroAction) and s.macro_id not in known:
                     raise ValueError(
-                        f"Makro '{m.name}' verweist auf unbekanntes Makro '{s.macro_id}'"
+                        tr(
+                            "Makro '{name}' verweist auf unbekanntes Makro '{id}'",
+                            name=m.name,
+                            id=s.macro_id,
+                        )
                     )
         return self

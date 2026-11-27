@@ -49,6 +49,8 @@ Layers: `config` (pydantic data model) → `core` (engine + macro runner) → `p
 
 ## Conventions
 
+- **i18n:** German is the source language. Wrap every user-visible string in `tr("…")` from `inputforge/i18n.py` (named placeholders: `tr("Gespeichert: {path}", path=p)`, never f-strings inside `tr`); module-level label tables use `N_("…")` and are translated with `tr(label)` where shown. Add the English text to `src/inputforge/locales/en.py`. `tests/test_i18n.py` fails on missing/stale catalog entries or mismatched placeholders. Python `log.*` messages stay German. New locale modules must be added to `hiddenimports` in `packaging/inputforge.spec`.
+
 - ruff: line length 100, rules `E F W I B UP SIM RUF` (RUF001–003 ignored for German typography).
 - `CHANGELOG.md` follows Keep a Changelog (German); add entries under `[Unreleased]`.
 - Release: bump `__version__` in `src/inputforge/__init__.py` (must match tag `vX.Y.Z`, checked by the release workflow), update CHANGELOG, push the tag.

@@ -16,6 +16,7 @@ from pathlib import Path
 from inputforge import __version__
 from inputforge.config.storage import ProfileError, load_profile
 from inputforge.core.keys import all_key_names
+from inputforge.i18n import set_language, tr
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
@@ -30,9 +31,16 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         for s in m.steps:
             image = getattr(s, "image", None)
             if image and not (base / image).exists() and not Path(image).is_absolute():
-                print(f"WARNUNG: {m.name}: Bild fehlt: {image}")
+                print(tr("WARNUNG: {macro}: Bild fehlt: {image}", macro=m.name, image=image))
                 missing += 1
-    print(f"OK: '{profile.name}' – {len(profile.macros)} Makros, {missing} fehlende Bilder")
+    print(
+        tr(
+            "OK: '{name}' – {macros} Makros, {missing} fehlende Bilder",
+            name=profile.name,
+            macros=len(profile.macros),
+            missing=missing,
+        )
+    )
     return 0
 
 
@@ -54,7 +62,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
     engine = Engine(platform)
     engine.load(profile, path.parent)
     engine.start()
-    print(f"InputForge {__version__} – '{profile.name}' läuft auf {platform.name}. Strg+C beendet.")
+    print(
+        f"InputForge {__version__} – "
+        + tr(
+            "'{name}' läuft auf {platform}. Strg+C beendet.",
+            name=profile.name,
+            platform=platform.name,
+        )
+    )
     try:
         threading.Event().wait()
     except KeyboardInterrupt:
@@ -70,6 +85,9 @@ def _cmd_keys(_args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from inputforge.config.storage import ProfileStore
+
+    set_language(ProfileStore().load_settings().language)
     parser = argparse.ArgumentParser(
         prog="inputforge-cli",
         description=__doc__,
@@ -78,13 +96,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("-v", "--verbose", action="store_true")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("validate", help="Profil prüfen")
+    p = sub.add_parser("validate", help=tr("Profil prüfen"))
     p.add_argument("profile")
     p.set_defaults(func=_cmd_validate)
-    p = sub.add_parser("run", help="Profil ohne UI ausführen")
+    p = sub.add_parser("run", help=tr("Profil ohne UI ausführen"))
     p.add_argument("profile")
     p.set_defaults(func=_cmd_run)
-    p = sub.add_parser("keys", help="Alle gültigen Tastennamen auflisten")
+    p = sub.add_parser("keys", help=tr("Alle gültigen Tastennamen auflisten"))
     p.set_defaults(func=_cmd_keys)
     args = parser.parse_args(argv)
     logging.basicConfig(

@@ -12,6 +12,8 @@ from __future__ import annotations
 import string
 from dataclasses import dataclass
 
+from inputforge.i18n import tr
+
 MODIFIERS: frozenset[str] = frozenset({"ctrl", "shift", "alt", "win"})
 
 # Seitenspezifische Modifier → generischer Modifier
@@ -176,7 +178,7 @@ def normalize_key(name: str) -> str:
     n = name.strip().lower()
     n = ALIASES.get(n, n)
     if n not in VK and n not in MOUSE_TRIGGERS:
-        raise KeyParseError(f"Unbekannte Taste: '{name}'")
+        raise KeyParseError(tr("Unbekannte Taste: '{name}'", name=name))
     return n
 
 
@@ -207,10 +209,12 @@ class Hotkey:
 
 def _split(text: str) -> list[str]:
     if not text.strip():
-        raise KeyParseError("Leere Tastenangabe")
+        raise KeyParseError(tr("Leere Tastenangabe"))
     parts = [s.strip() for s in text.split("+")]
     if not all(parts):
-        raise KeyParseError(f"Ungültige Angabe '{text}' (für die Plus-Taste 'plus' schreiben)")
+        raise KeyParseError(
+            tr("Ungültige Angabe '{text}' (für die Plus-Taste 'plus' schreiben)", text=text)
+        )
     return parts
 
 
@@ -222,7 +226,11 @@ def parse_hotkey(text: str) -> Hotkey:
         generic = MODIFIER_OF.get(m)
         if generic is None:
             raise KeyParseError(
-                f"'{m}' ist kein Modifier – nur ctrl/shift/alt/win dürfen vor der Taste stehen"
+                tr(
+                    "'{key}' ist kein Modifier – "
+                    "nur ctrl/shift/alt/win dürfen vor der Taste stehen",
+                    key=m,
+                )
             )
         norm_mods.add(generic)
     return Hotkey(key=key, modifiers=frozenset(norm_mods))
@@ -233,7 +241,9 @@ def parse_chord(text: str) -> list[str]:
     keys = [normalize_key(p) for p in _split(text)]
     for k in keys:
         if is_mouse(k):
-            raise KeyParseError(f"Maustaste '{k}' ist in einer Tastenaktion nicht erlaubt")
+            raise KeyParseError(
+                tr("Maustaste '{key}' ist in einer Tastenaktion nicht erlaubt", key=k)
+            )
     return keys
 
 

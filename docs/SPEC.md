@@ -187,6 +187,8 @@ Zielfenster fehlt, Suchbereich liegt außerhalb des Bildschirms.
 | FR-U8 | Einblendungen (Toasts) stehlen **nie** den Fokus (`WA_ShowWithoutActivating`, `WindowDoesNotAcceptFocus`, `WindowTransparentForInput`). |
 | FR-U9 | Einzelinstanz: Ein zweiter Start holt die laufende Instanz nach vorne. |
 | FR-U10 | Die Statusleiste zeigt Plattform, Adminrechte und den Zustand Scharf/Pausiert. |
+| FR-U11 | Sprachen: Deutsch und Englisch. Standard ist die Systemsprache (Deutsch bei deutscher Locale, sonst Englisch); Menü „Sprache / Language“ legt sie fest (`language` in `settings.json`), wirksam nach Neustart. Deutsch ist Quellsprache: Texte werden mit `i18n.tr()` übersetzt, Kataloge liegen in `locales/<code>.py`. Auch CLI-, Engine- und Validierungsmeldungen sind übersetzt. |
+| FR-U12 | Beschriftungen sind eindeutig: Profil-Aktionen heißen „Neues Profil“/„Profil öffnen…“, Makro-Aktionen „+ Neues Makro“; Duplizieren/Löschen von Makros und Schritten haben erklärende Tooltips. |
 
 ### 3.8 Kommandozeile
 
@@ -452,7 +454,7 @@ CI: GitHub Actions, Matrix Windows/Ubuntu × Python 3.11/3.12. Unter Linux mit X
 - Bedingungen: „wenn Bild sichtbar, dann …“ (Verzweigung), Pixel-Farbe prüfen
 - Makro-Rekorder (Eingaben aufzeichnen → Schritte)
 - Pro-Makro-Fensterbindung statt nur pro Profil
-- Mehrsprachige UI (Qt Linguist), aktuell nur Deutsch
+- Weitere UI-Sprachen (aktuell Deutsch und Englisch, siehe FR-U11)
 - Optional: Interception-Treiber-Backend für Spiele, die injizierte Eingaben ignorieren
   (nur Single-Player, mit deutlichem Hinweis)
 - Autostart mit Windows, automatisches Laden eines Profils pro Prozess

@@ -1,4 +1,7 @@
-"""Menschenlesbare Beschreibungen für Aktionen/Enums (Qt-frei, testbar)."""
+"""Menschenlesbare Beschreibungen für Aktionen/Enums (Qt-frei, testbar).
+
+Die Label-Tabellen enthalten deutsche Quelltexte; an der Verwendungsstelle mit ``tr`` übersetzen.
+"""
 
 from __future__ import annotations
 
@@ -19,94 +22,105 @@ from inputforge.config.models import (
     SearchArea,
     TypeTextAction,
 )
+from inputforge.i18n import N_, tr
 
 ACTION_LABELS: dict[str, str] = {
-    "key": "Taste / Kombination",
-    "type_text": "Tastenfolge tippen",
-    "mouse_click": "Mausklick",
-    "mouse_move": "Maus bewegen",
-    "delay": "Warten",
-    "image_click": "Bild suchen & klicken",
-    "activate_window": "Fenster aktivieren",
-    "run_macro": "Anderes Makro ausführen",
+    "key": N_("Taste / Kombination"),
+    "type_text": N_("Tastenfolge tippen"),
+    "mouse_click": N_("Mausklick"),
+    "mouse_move": N_("Maus bewegen"),
+    "delay": N_("Warten"),
+    "image_click": N_("Bild suchen & klicken"),
+    "activate_window": N_("Fenster aktivieren"),
+    "run_macro": N_("Anderes Makro ausführen"),
 }
 
 MODE_LABELS: dict[RunMode, str] = {
-    RunMode.ONCE: "Einmal ausführen",
-    RunMode.TOGGLE: "Schleife – Toggle (an/aus)",
-    RunMode.HOLD: "Schleife – solange gehalten",
-    RunMode.REPEAT: "Schleife – N-mal / Dauer",
+    RunMode.ONCE: N_("Einmal ausführen"),
+    RunMode.TOGGLE: N_("Schleife – Toggle (an/aus)"),
+    RunMode.HOLD: N_("Schleife – solange gehalten"),
+    RunMode.REPEAT: N_("Schleife – N-mal / Dauer"),
 }
 
 BUTTON_LABELS: dict[MouseButton, str] = {
-    MouseButton.LEFT: "Links",
-    MouseButton.RIGHT: "Rechts",
-    MouseButton.MIDDLE: "Mitte",
-    MouseButton.X1: "Maus 4 (Zurück)",
-    MouseButton.X2: "Maus 5 (Vor)",
+    MouseButton.LEFT: N_("Links"),
+    MouseButton.RIGHT: N_("Rechts"),
+    MouseButton.MIDDLE: N_("Mitte"),
+    MouseButton.X1: N_("Maus 4 (Zurück)"),
+    MouseButton.X2: N_("Maus 5 (Vor)"),
 }
 
 CLICK_LABELS: dict[MouseButton, str] = {
-    MouseButton.LEFT: "Linksklick",
-    MouseButton.RIGHT: "Rechtsklick",
-    MouseButton.MIDDLE: "Mittelklick",
-    MouseButton.X1: "Maus-4-Klick",
-    MouseButton.X2: "Maus-5-Klick",
+    MouseButton.LEFT: N_("Linksklick"),
+    MouseButton.RIGHT: N_("Rechtsklick"),
+    MouseButton.MIDDLE: N_("Mittelklick"),
+    MouseButton.X1: N_("Maus-4-Klick"),
+    MouseButton.X2: N_("Maus-5-Klick"),
 }
 
 SPACE_LABELS: dict[CoordSpace, str] = {
-    CoordSpace.SCREEN: "Bildschirm (absolut)",
-    CoordSpace.WINDOW: "Zielfenster (relativ)",
+    CoordSpace.SCREEN: N_("Bildschirm (absolut)"),
+    CoordSpace.WINDOW: N_("Zielfenster (relativ)"),
 }
 
 AREA_LABELS: dict[SearchArea, str] = {
-    SearchArea.WINDOW: "Zielfenster",
-    SearchArea.SCREEN: "Ganzer Bildschirm",
-    SearchArea.REGION: "Bereich im Fenster",
+    SearchArea.WINDOW: N_("Zielfenster"),
+    SearchArea.SCREEN: N_("Ganzer Bildschirm"),
+    SearchArea.REGION: N_("Bereich im Fenster"),
 }
 
 ANCHOR_LABELS: dict[Anchor, str] = {
-    Anchor.CENTER: "Bildmitte",
-    Anchor.TOP_LEFT: "Obere linke Ecke",
+    Anchor.CENTER: N_("Bildmitte"),
+    Anchor.TOP_LEFT: N_("Obere linke Ecke"),
 }
 
 NOT_FOUND_LABELS: dict[NotFoundPolicy, str] = {
-    NotFoundPolicy.CONTINUE: "Weiter mit nächstem Schritt",
-    NotFoundPolicy.STOP: "Makro abbrechen",
+    NotFoundPolicy.CONTINUE: N_("Weiter mit nächstem Schritt"),
+    NotFoundPolicy.STOP: N_("Makro abbrechen"),
 }
 
 
 def _space(space: CoordSpace) -> str:
-    return "Fenster" if space == CoordSpace.WINDOW else "Bildschirm"
+    return tr("Fenster") if space == CoordSpace.WINDOW else tr("Bildschirm")
 
 
 def describe(action: object, profile: Profile | None = None) -> str:
     match action:
         case KeyAction(keys=k, mode=mode, hold_ms=h):
-            verb = {"tap": "Drücke", "down": "Halte", "up": "Lasse los"}[mode]
-            extra = f" ({h} ms)" if mode == "tap" else ""
-            text = f"{verb} {k.upper()}{extra}"
+            if mode == "tap":
+                text = tr("Drücke {keys} ({ms} ms)", keys=k.upper(), ms=h)
+            elif mode == "down":
+                text = tr("Halte {keys}", keys=k.upper())
+            else:
+                text = tr("Lasse {keys} los", keys=k.upper())
         case TypeTextAction(text=t):
-            text = f'Tippe "{t}"'
+            text = tr('Tippe "{text}"', text=t)
         case MouseClickAction(button=b, x=x, y=y, space=s, clicks=c):
-            where = f" bei ({x}, {y}) [{_space(s)}]" if x is not None else " an Mausposition"
+            where = (
+                tr(" bei ({x}, {y}) [{space}]", x=x, y=y, space=_space(s))
+                if x is not None
+                else tr(" an Mausposition")
+            )
             times = f" {c}×" if c > 1 else ""
-            text = f"{CLICK_LABELS[b]}{times}{where}"
+            text = f"{tr(CLICK_LABELS[b])}{times}{where}"
         case MouseMoveAction(x=x, y=y, relative=True):
-            text = f"Maus um ({x:+d}, {y:+d}) bewegen"
+            text = tr("Maus um ({x}, {y}) bewegen", x=f"{x:+d}", y=f"{y:+d}")
         case MouseMoveAction(x=x, y=y, space=s):
-            text = f"Maus nach ({x}, {y}) [{_space(s)}]"
+            text = tr("Maus nach ({x}, {y}) [{space}]", x=x, y=y, space=_space(s))
         case DelayAction(ms=ms, random_ms=r):
-            text = f"Warte {ms} ms" + (f" (+0–{r} ms zufällig)" if r else "")
+            text = tr("Warte {ms} ms", ms=ms)
+            if r:
+                text += tr(" (+0–{ms} ms zufällig)", ms=r)
         case ImageClickAction(image=img, confidence=c, button=b, timeout_ms=t):
-            act = CLICK_LABELS[b] if b is not None else "Maus hin"
-            wait = f", warte bis {t} ms" if t else ""
-            text = f"Suche {img} (≥{c:.2f}) → {act}{wait}"
+            act = tr(CLICK_LABELS[b]) if b is not None else tr("Maus hin")
+            wait = tr(", warte bis {ms} ms", ms=t) if t else ""
+            text = tr("Suche {image} (≥{conf}) → {action}", image=img, conf=f"{c:.2f}", action=act)
+            text += wait
         case ActivateWindowAction(title=t):
-            text = f'Aktiviere Fenster "{t or "<Zielfenster>"}"'
+            text = tr('Aktiviere Fenster "{title}"', title=t or tr("<Zielfenster>"))
         case RunMacroAction(macro_id=mid):
             target = profile.macro_by_id(mid) if profile else None
-            text = f"Führe Makro aus: {target.name if target else mid}"
+            text = tr("Führe Makro aus: {name}", name=target.name if target else mid)
         case _:
             text = repr(action)
     post = getattr(action, "post_delay_ms", 0)
