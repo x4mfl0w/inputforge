@@ -27,19 +27,29 @@ _lang = DEFAULT_LANGUAGE
 _catalog: dict[str, str] = {}
 
 
+def _windows_ui_language() -> str:
+    """Anzeigesprache von Windows (z. B. ``de_DE``), sonst ``""``."""
+    if sys.platform != "win32":
+        return ""
+    try:
+        import ctypes
+
+        lcid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+    except (AttributeError, OSError):
+        return ""
+    return locale.windows_locale.get(lcid, "")
+
+
 def detect_language() -> str:
-    """Sprache aus der Systemumgebung: Deutsch bei deutscher Locale, sonst Englisch."""
-    candidates = [os.environ.get(v, "") for v in ("LC_ALL", "LC_MESSAGES", "LANG", "LANGUAGE")]
+    """Sprache aus der Systemumgebung: Deutsch bei deutscher Locale, sonst Englisch.
+
+    Unter Windows hat die Anzeigesprache Vorrang vor ``LANG`` (Git Bash/MSYS setzen
+    ``LANG`` oft unabhängig von der Windows-Sprache).
+    """
+    candidates = [_windows_ui_language()]
+    candidates += [os.environ.get(v, "") for v in ("LC_ALL", "LC_MESSAGES", "LANG", "LANGUAGE")]
     with contextlib.suppress(ValueError):
         candidates.append(locale.getlocale()[0] or "")
-    if sys.platform == "win32":
-        try:
-            import ctypes
-
-            lcid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
-            candidates.insert(0, locale.windows_locale.get(lcid, ""))
-        except (AttributeError, OSError):
-            pass
     for c in candidates:
         c = c.strip().lower()
         if not c or c in ("c", "posix"):

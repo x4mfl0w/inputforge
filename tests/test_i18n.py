@@ -90,7 +90,17 @@ def test_unknown_language_falls_back_to_detection(monkeypatch: pytest.MonkeyPatc
     ("env", "expected"), [("de_DE.UTF-8", "de"), ("en_US.UTF-8", "en"), ("fr_FR.UTF-8", "en")]
 )
 def test_detect_language(monkeypatch: pytest.MonkeyPatch, env: str, expected: str) -> None:
+    monkeypatch.setattr(i18n, "_windows_ui_language", lambda: "")
     for var in ("LC_ALL", "LC_MESSAGES", "LANGUAGE"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("LANG", env)
+    assert i18n.detect_language() == expected
+
+
+@pytest.mark.parametrize(("ui", "expected"), [("de_DE", "de"), ("en_US", "en")])
+def test_windows_ui_language_wins_over_lang(
+    monkeypatch: pytest.MonkeyPatch, ui: str, expected: str
+) -> None:
+    monkeypatch.setattr(i18n, "_windows_ui_language", lambda: ui)
+    monkeypatch.setenv("LANG", "fr_FR.UTF-8")
     assert i18n.detect_language() == expected
