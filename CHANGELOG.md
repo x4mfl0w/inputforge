@@ -12,6 +12,9 @@ Alle relevanten Änderungen an diesem Projekt. Format nach
   Validierungsmeldungen sowie die Qt-Standardknöpfe sind übersetzt.
 - Englischsprachiges Beispiel `examples/cli_quickstart/` für die Nutzung ohne GUI
   (`validate`, `keys`, `run`), ohne Bild-Assets; wird in der CI mitvalidiert.
+- Englische Projektdokumentation: `README.md` ist jetzt Englisch (deutsche Fassung in
+  `README.de.md`), dazu `CONTRIBUTING.md`, `SECURITY.md`, Issue- und PR-Vorlagen sowie
+  eine englische Anleitung zum Grim-Dawn-Beispiel.
 
 ### Geändert
 - Eindeutige Beschriftungen: „Neu“ in der Werkzeugleiste heißt jetzt „Neues Profil“

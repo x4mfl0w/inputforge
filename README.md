@@ -1,112 +1,131 @@
 # InputForge
 
-Makros, Hotkeys und Bildsuche für PC-Spiele, komplett per Oberfläche konfigurierbar. Gedacht
-als Ersatz für handgeschriebene AutoHotkey-Skripte. Läuft unter **Windows** und **Linux (X11)**.
+**English** · [Deutsch](README.de.md)
 
-- **Spieletauglich:** Unter Windows `SendInput` mit Scancodes und Low-Level-Hooks, wie AHK.
-  Unter Linux XTest/XRecord ohne Root-Rechte, für native Spiele und Wine/Proton.
-- **Bildsuche:** Icons auf dem Bildschirm finden und anklicken. Vorlagen lassen sich direkt
-  in der App ausschneiden; die Übereinstimmung kann man live testen. Transparenz wird
-  unterstützt.
-- **Schleifen:** Toggle (an/aus), solange gehalten, N-mal oder für eine feste Dauer, jeweils
-  mit Intervall.
-- **Mehrfachbelegung:** eine Taste löst mehrere Makros oder Tasten gleichzeitig aus
-  (`1+2+3`).
-- **Trigger:** Tasten, Kombinationen (`ctrl+shift+f1`) und Maustasten 3/4/5 sowie das
-  Mausrad. Unter Windows wahlweise abgefangen oder an das Spiel durchgereicht.
-- **Sicherheitsnetz:** Notaus (`Strg+F12`), Hotkeys global an/aus (`Strg+Pause`), optional
-  nur aktiv, wenn das Spiel im Vordergrund ist.
-- Profile pro Spiel (JSON), Tray-Icon, Einzelinstanz, CLI für den Betrieb ohne UI.
+[![CI](https://github.com/x4mfl0w/inputforge/actions/workflows/ci.yml/badge.svg)](https://github.com/x4mfl0w/inputforge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> **Hinweis:** Gedacht für Single-Player- und Koop-Spiele. In Online-Spielen können Makros
-> gegen die Nutzungsbedingungen verstoßen. Die Verantwortung liegt bei dir.
+Macros, hotkeys and image search for PC games, configured entirely through a GUI. Meant as a
+replacement for hand-written AutoHotkey scripts. Runs on **Windows** and **Linux (X11)**.
 
-## Plattformen
+- **Game-ready:** on Windows, `SendInput` with scancodes and low-level hooks, like AHK.
+  On Linux, XTest/XRecord without root, for native games and Wine/Proton.
+- **Image search:** find icons on screen and click them. Templates can be captured directly
+  in the app, and the match score can be tested live. Transparency is supported.
+- **Loops:** toggle (on/off), while held, N times or for a fixed duration, each with an
+  interval.
+- **Multi-binding:** one key triggers several macros or keys at once (`1+2+3`).
+- **Triggers:** keys, combinations (`ctrl+shift+f1`), mouse buttons 3/4/5 and the mouse
+  wheel. On Windows, triggers can either be suppressed or passed through to the game.
+- **Safety net:** emergency stop (`Ctrl+F12`), global hotkey on/off (`Ctrl+Pause`), optionally
+  only active while the game is in the foreground.
+- Per-game profiles (JSON), tray icon, single instance, CLI for running without the UI.
+- UI in English and German (follows the system language, switchable via *Language*).
+
+> **Note:** Intended for single-player and co-op games. In online games, macros may violate the
+> terms of service. You are responsible for how you use it.
+
+## Platforms
 
 | | Windows | Linux (X11) |
 |---|---|---|
-| Tasten, Klicks, Tippen, Mausbewegung | ✔ | ✔ (Tippen ohne AltGr-Zeichen wie `@`, `€`) |
-| Hotkeys inkl. Maus 3/4/5 und Rad | ✔ | ✔ |
-| Trigger abfangen (Spiel bekommt F1 nicht) | ✔ | ✘ – das Spiel erhält die Taste mit |
-| Bildsuche, Fenster aktivieren, Fensterkoordinaten | ✔ | ✔ |
-| Root/Admin nötig | nur wenn das Spiel als Admin läuft | nein |
-| Wayland | – | ✘ (X11-Sitzung wählen) |
+| Keys, clicks, typing, mouse movement | ✔ | ✔ (no AltGr characters such as `@`, `€` when typing) |
+| Hotkeys incl. mouse 3/4/5 and wheel | ✔ | ✔ |
+| Suppress trigger (game doesn't receive F1) | ✔ | ✘ – the game receives the key too |
+| Image search, window activation, window coordinates | ✔ | ✔ |
+| Root/admin required | only if the game runs as admin | no |
+| Wayland | – | ✘ (choose an X11 session) |
 
-Details und Gründe: [`docs/SPEC.md` §5.3](docs/SPEC.md#53-unter-linux-vorerst-ausgelassen).
+Details and rationale: [`docs/SPEC.md` §5.3](docs/SPEC.md#53-unter-linux-vorerst-ausgelassen)
+(German).
 
 ## Installation
 
 ### Linux
 
-**Fertiger Build:** `InputForge-x.y.z-linux-x86_64.tar.gz` entpacken und
-`InputForge-x.y.z/InputForge` starten.
+**Prebuilt:** extract `InputForge-x.y.z-linux-x86_64.tar.gz` from the
+[releases page](https://github.com/x4mfl0w/inputforge/releases) and run
+`InputForge-x.y.z/InputForge`.
 
-**Aus dem Quellcode:**
+**From source:**
 
 ```bash
-sudo apt install libxcb-cursor0          # von Qt ≥ 6.5 benötigt
-git clone <repo> inputforge && cd inputforge
+sudo apt install libxcb-cursor0          # required by Qt ≥ 6.5
+git clone https://github.com/x4mfl0w/inputforge.git inputforge && cd inputforge
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
 .venv/bin/inputforge                     # GUI
 ```
 
-Die Sitzung muss X11 sein (bei Linux Mint/Cinnamon Standard). Root-Rechte, Gruppen oder
-udev-Regeln sind nicht nötig.
+The session must be X11 (the default on Linux Mint/Cinnamon). No root, groups or udev rules
+are needed.
 
 ### Windows
 
-**Fertiger Build:** `InputForge-x.y.z-win64.zip` von der Release-Seite herunterladen,
-entpacken und `InputForge.exe` starten.
+**Prebuilt:** download `InputForge-x.y.z-win64.zip` from the
+[releases page](https://github.com/x4mfl0w/inputforge/releases), extract it and run
+`InputForge.exe`.
 
-> Läuft das Spiel **als Administrator**, muss InputForge ebenfalls als Administrator laufen
-> (oder du nimmst `InputForge-…-admin.exe`). Sonst blockiert Windows die Eingaben
-> stillschweigend.
+> If the game runs **as administrator**, InputForge must run as administrator too (or use
+> `InputForge-…-win64-admin.exe`). Otherwise Windows silently blocks the input.
 
-**Aus dem Quellcode** (Python ≥ 3.11):
+**From source** (Python ≥ 3.11):
 
 ```powershell
-git clone <repo> inputforge; cd inputforge
+git clone https://github.com/x4mfl0w/inputforge.git inputforge; cd inputforge
 py -3.12 -m venv .venv
 .venv\Scripts\pip install -e ".[dev]"
 .venv\Scripts\inputforge                # GUI
 ```
 
-## Schnellstart: das Grim-Dawn-Beispiel
+## Quick start
 
-1. `Datei → Öffnen…` → `examples/grim_dawn/grim_dawn.json`
-2. Spiel im **randlosen Fenstermodus** starten, Inventar öffnen.
-3. Makro „Buffs“ → Schritt „Suche assets/scroll.png“ doppelklicken →
-   **„Vom Bildschirm ausschneiden…“**. Ins Spiel wechseln, nach dem Countdown einen engen
-   Rahmen um das Icon ziehen, speichern.
-4. **„Jetzt testen“** zeigt den Score. Liegt er über der Schwelle, passt alles.
-5. Dasselbe für `potion.png` und `gheed.png`, danach speichern (`Strg+S`).
-6. Im Spiel **F1** drücken.
+### Command line, no setup: `examples/cli_quickstart`
 
-Wie das Original-AHK-Skript übersetzt wird, steht in
-[`docs/SPEC.md` §7](docs/SPEC.md#7-ahk--inputforge).
+A game-agnostic profile without image assets – open a text editor and press `F6`:
 
-## Typische Rezepte
+```bash
+.venv/bin/inputforge-cli run examples/cli_quickstart/cli_quickstart.json
+```
 
-| Ziel | Einstellung |
+See [`examples/cli_quickstart/README.md`](examples/cli_quickstart/README.md).
+
+### GUI: the Grim Dawn example
+
+1. *File → Open profile…* → `examples/grim_dawn/grim_dawn.json`
+2. Start the game in **borderless windowed mode** and open the inventory.
+3. Macro "Buffs" → double-click the step "Find assets/scroll.png" →
+   **"Capture from screen…"**. Switch to the game, after the countdown drag a tight
+   rectangle around the icon, save.
+4. **"Test now"** shows the score. If it is above the threshold, you're set.
+5. Repeat for `potion.png` and `gheed.png`, then save (`Ctrl+S`).
+6. Press **F1** in the game.
+
+See [`examples/grim_dawn/README.en.md`](examples/grim_dawn/README.en.md). How the original AHK
+script maps to InputForge is described in [`docs/SPEC.md` §7](docs/SPEC.md#7-ahk--inputforge)
+(German).
+
+## Common recipes
+
+| Goal | Setting |
 |---|---|
-| Taste 3 alle 500 ms drücken, F3 an/aus | Modus *Toggle*, Pause 500 ms, Schritt *Taste* `3` |
-| Linksklick-Spam, solange Maus 4 gehalten wird | Trigger `xbutton1`, Modus *solange gehalten*, Pause 50 ms, Schritt *Mausklick* |
-| 10 s lang alle 2 s ein Trank | Modus *N-mal / Dauer*, Dauer 10 s, Pause 2000 ms |
-| F1 drückt 1, 2, 3, 4 nacheinander | vier *Taste*-Schritte oder *Tastenfolge tippen* „1234“ |
-| F1 drückt 1 und 2 gleichzeitig | Schritt *Taste* `1+2` |
-| Warten, bis ein Button sichtbar ist, dann klicken | *Bild suchen*, „Warten bis sichtbar“ 5000 ms, „Wenn nicht gefunden“ = Abbrechen |
-| F1 soll im Spiel trotzdem ankommen | Makro → „Trigger an das Spiel durchlassen“ |
+| Press 3 every 500 ms, F3 toggles | Mode *Loop – toggle*, pause 500 ms, step *Key* `3` |
+| Spam left click while mouse 4 is held | Trigger `xbutton1`, mode *Loop – while held*, pause 50 ms, step *Mouse click* |
+| A potion every 2 s for 10 s | Mode *Loop – N times / duration*, duration 10 s, pause 2000 ms |
+| F1 presses 1, 2, 3, 4 in sequence | four *Key* steps or *Type text* "1234" |
+| F1 presses 1 and 2 simultaneously | step *Key* `1+2` |
+| Wait until a button is visible, then click | *Find image & click*, "Wait until visible" 5000 ms, "If not found" = Abort macro |
+| F1 should still reach the game | Macro → "Pass trigger through to the game" |
 
-## Kommandozeile
+## Command line
 
 ```
-inputforge-cli validate profil.json    # Profil und Bildpfade prüfen
-inputforge-cli run profil.json         # ohne UI ausführen
-inputforge-cli keys                    # alle Tastennamen
+inputforge-cli validate profile.json    # check profile and image paths (exit code 1 on error)
+inputforge-cli run profile.json         # run without UI (Ctrl+C stops)
+inputforge-cli keys                     # list all key names
 ```
 
-## Entwicklung
+## Development
 
 ```bash
 pip install -e ".[dev]"
@@ -115,25 +134,32 @@ ruff check src tests && ruff format --check src tests
 mypy src
 ```
 
-X11-Integrationstests senden echte Eingaben und laufen deshalb nur auf einem Wegwerf-X-Server:
-`INPUTFORGE_X11_TESTS=1 xvfb-run -a pytest tests/test_x11.py`. Niemals auf dem eigenen
-Desktop ausführen.
+X11 integration tests send real input and therefore only run on a throwaway X server:
+`INPUTFORGE_X11_TESTS=1 xvfb-run -a pytest tests/test_x11.py`. Never run them on your own
+desktop.
 
-**Release:** Version in `src/inputforge/__init__.py` erhöhen, `CHANGELOG.md` pflegen und
-den Tag `vX.Y.Z` pushen. GitHub Actions baut und veröffentlicht die Windows- und
-Linux-Pakete. Lokal: `packaging\build.ps1` (Windows) bzw. `bash packaging/build.sh` (Linux).
+**Release:** bump the version in `src/inputforge/__init__.py`, update `CHANGELOG.md` and push
+the tag `vX.Y.Z`. GitHub Actions builds and publishes the Windows and Linux packages. Locally:
+`packaging\build.ps1` (Windows) or `bash packaging/build.sh` (Linux).
 
-## Projektstruktur
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions (the codebase, spec and changelog are
+written in German).
+
+## Project layout
 
 ```
-src/inputforge/   Anwendung (config, core, platform, vision, ui)
-tests/            pytest (Engine mit Fake-Backends, UI-Smoke, Windows- und X11-Tests)
-docs/SPEC.md      Spezifikation
-examples/         Beispielprofile (grim_dawn, cli_quickstart – CLI-Beispiel auf Englisch)
-packaging/        PyInstaller-Spec, Build-Skript
-.github/          CI und Release-Pipeline
+src/inputforge/   application (config, core, platform, vision, ui)
+tests/            pytest (engine with fake backends, UI smoke, Windows and X11 tests)
+docs/SPEC.md      specification (German)
+examples/         example profiles (grim_dawn, cli_quickstart)
+packaging/        PyInstaller spec, build scripts
+.github/          CI and release pipeline
 ```
 
-## Lizenz
+## Security
 
-MIT, siehe [LICENSE](LICENSE).
+Please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+MIT, see [LICENSE](LICENSE).
