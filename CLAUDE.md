@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-InputForge: GUI-configurable macro/hotkey/image-search tool for PC games (AutoHotkey replacement), Python ≥ 3.11 + PySide6. Targets **Windows** and **Linux/X11**. `docs/SPEC.md` is the authoritative spec (requirement IDs like FR-P3, platform tables, threading model) — read the relevant section before changing behavior, and update it when behavior changes. UI strings, docs, docstrings and comments are in German.
+InputForge: GUI-configurable macro/hotkey/image-search tool for PC games (AutoHotkey replacement), Python ≥ 3.11 + PySide6. Targets **Windows** and **Linux/X11**. `docs/SPEC.md` is the authoritative spec (requirement IDs like FR-P3, platform tables, threading model) — read the relevant section before changing behavior, and update it when behavior changes. UI strings, docs, docstrings and comments are in German. Exception: the GitHub-facing docs `README.md`, `CONTRIBUTING.md`, `SECURITY.md` and `.github/` templates are English; `README.de.md` is the German README — keep both READMEs in sync.
 
 ## Commands
 

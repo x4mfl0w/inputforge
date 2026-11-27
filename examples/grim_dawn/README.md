@@ -1,5 +1,7 @@
 # Beispiel: Grim Dawn
 
+[English](README.en.md) · **Deutsch**
+
 Übersetzung des ursprünglichen AHK-Skripts.
 
 | Makro | Trigger | Aktiv | Inhalt |

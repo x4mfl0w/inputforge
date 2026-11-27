@@ -96,3 +96,17 @@ def test_example_profile_is_valid():
     path = Path(__file__).parent.parent / "examples" / "grim_dawn" / "grim_dawn.json"
     p = load_profile(path)
     assert {t for m in p.macros for t in m.triggers} >= {"f1", "f2"}
+
+
+def test_cli_quickstart_example_is_valid():
+    from pathlib import Path
+
+    path = Path(__file__).parent.parent / "examples" / "cli_quickstart" / "cli_quickstart.json"
+    p = load_profile(path)
+    ids = {m.id for m in p.macros}
+    # run_macro-Verweise müssen auf existierende Makros zeigen
+    for m in p.macros:
+        for s in m.steps:
+            if s.type == "run_macro":
+                assert s.macro_id in ids
+    assert {m.mode for m in p.macros} == {"once", "toggle", "hold", "repeat"}

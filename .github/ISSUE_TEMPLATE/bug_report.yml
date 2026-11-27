@@ -1,0 +1,55 @@
+name: Bug report / Fehlerbericht
+description: Something doesn't work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Load profile …
+        2. Press F1 in …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: InputForge version
+      description: "`inputforge-cli --version`, and prebuilt or source build"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - Linux (X11)
+        - Linux (Wayland)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment details
+      description: OS version, desktop environment, game, admin / Wine / Proton
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: "Run with `inputforge-cli -v run profile.json` (or the GUI log panel)."
+      render: text
+  - type: textarea
+    id: profile
+    attributes:
+      label: Profile JSON (optional)
+      description: Remove anything private.
+      render: json
