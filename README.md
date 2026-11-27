@@ -129,7 +129,7 @@ Linux-Pakete. Lokal: `packaging\build.ps1` (Windows) bzw. `bash packaging/build.
 src/inputforge/   Anwendung (config, core, platform, vision, ui)
 tests/            pytest (Engine mit Fake-Backends, UI-Smoke, Windows- und X11-Tests)
 docs/SPEC.md      Spezifikation
-examples/         Beispielprofile
+examples/         Beispielprofile (grim_dawn, cli_quickstart – CLI-Beispiel auf Englisch)
 packaging/        PyInstaller-Spec, Build-Skript
 .github/          CI und Release-Pipeline
 ```

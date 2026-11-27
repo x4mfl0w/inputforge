@@ -40,5 +40,7 @@ jobs:
         env:
           INPUTFORGE_X11_TESTS: "1"
         run: xvfb-run -a pytest --cov=inputforge --cov-report=term-missing
-      - name: Beispielprofil validieren
-        run: inputforge-cli validate examples/grim_dawn/grim_dawn.json
+      - name: Beispielprofile validieren
+        run: |
+          inputforge-cli validate examples/grim_dawn/grim_dawn.json
+          inputforge-cli validate examples/cli_quickstart/cli_quickstart.json

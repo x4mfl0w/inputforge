@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "name": "CLI Quickstart",
+  "settings": {
+    "target_window": "",
+    "require_window_focus": false,
+    "stop_all_hotkey": "ctrl+f12",
+    "arm_toggle_hotkey": "ctrl+pause",
+    "show_notifications": true
+  },
+  "macros": [
+    {
+      "id": "greeting",
+      "name": "Type greeting",
+      "enabled": true,
+      "triggers": ["f6"],
+      "passthrough": true,
+      "mode": "once",
+      "steps": [
+        {
+          "id": "text",
+          "comment": "Types a line into the focused window",
+          "type": "type_text",
+          "text": "Hello from InputForge!",
+          "key_delay_ms": 10,
+          "hold_ms": 30
+        }
+      ]
+    },
+    {
+      "id": "greeting_enter",
+      "name": "Greeting + Enter",
+      "enabled": true,
+      "triggers": ["ctrl+alt+g"],
+      "passthrough": true,
+      "mode": "once",
+      "steps": [
+        {
+          "id": "release",
+          "comment": "Give the user time to release Ctrl+Alt",
+          "type": "delay",
+          "ms": 150
+        },
+        {
+          "id": "call",
+          "comment": "Reuse the 'Type greeting' macro",
+          "type": "run_macro",
+          "macro_id": "greeting"
+        },
+        {
+          "id": "enter",
+          "type": "key",
+          "keys": "enter",
+          "mode": "tap",
+          "hold_ms": 30
+        }
+      ]
+    },
+    {
+      "id": "autoclick",
+      "name": "Autoclicker (toggle)",
+      "enabled": true,
+      "triggers": ["f7"],
+      "passthrough": true,
+      "mode": "toggle",
+      "interval_ms": 100,
+      "steps": [
+        {
+          "id": "click",
+          "comment": "Left click at the current cursor position",
+          "type": "mouse_click",
+          "button": "left",
+          "hold_ms": 20
+        }
+      ]
+    },
+    {
+      "id": "hold_spam",
+      "name": "Spam 1 while held",
+      "enabled": true,
+      "triggers": ["f8"],
+      "passthrough": true,
+      "mode": "hold",
+      "interval_ms": 200,
+      "steps": [
+        {
+          "id": "tap1",
+          "type": "key",
+          "keys": "1",
+          "mode": "tap",
+          "hold_ms": 30
+        }
+      ]
+    },
+    {
+      "id": "burst",
+      "name": "Jump burst (5x)",
+      "enabled": true,
+      "triggers": ["f9"],
+      "passthrough": true,
+      "mode": "repeat",
+      "repeat_count": 5,
+      "interval_ms": 0,
+      "steps": [
+        {
+          "id": "jump",
+          "type": "key",
+          "keys": "space",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "pause",
+          "comment": "300 ms plus up to 100 ms of jitter",
+          "type": "delay",
+          "ms": 300,
+          "random_ms": 100
+        }
+      ]
+    }
+  ]
+}
