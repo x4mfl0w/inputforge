@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "name": "Grim Dawn",
+  "settings": {
+    "target_window": "Grim Dawn",
+    "require_window_focus": false,
+    "stop_all_hotkey": "ctrl+f12",
+    "arm_toggle_hotkey": "ctrl+pause",
+    "show_notifications": true
+  },
+  "macros": [
+    {
+      "id": "buffs",
+      "name": "Buffs",
+      "enabled": true,
+      "triggers": [
+        "f1"
+      ],
+      "passthrough": false,
+      "wildcard": false,
+      "mode": "once",
+      "interval_ms": 100,
+      "repeat_count": 0,
+      "duration_s": 0.0,
+      "steps": [
+        {
+          "id": "activate",
+          "enabled": true,
+          "comment": "Grim Dawn aktivieren",
+          "post_delay_ms": 0,
+          "type": "activate_window",
+          "title": "",
+          "wait_ms": 50
+        },
+        {
+          "id": "park",
+          "enabled": true,
+          "comment": "Maus parken",
+          "post_delay_ms": 0,
+          "type": "mouse_move",
+          "x": 0,
+          "y": 0,
+          "space": "screen",
+          "relative": false
+        },
+        {
+          "id": "skills",
+          "enabled": true,
+          "comment": "Vor Inventar: 1 und 2",
+          "post_delay_ms": 30,
+          "type": "type_text",
+          "text": "12",
+          "key_delay_ms": 10,
+          "hold_ms": 30
+        },
+        {
+          "id": "inv_open",
+          "enabled": true,
+          "comment": "Inventar öffnen",
+          "post_delay_ms": 100,
+          "type": "key",
+          "keys": "y",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "scroll",
+          "enabled": true,
+          "comment": "AHK *100",
+          "post_delay_ms": 100,
+          "type": "image_click",
+          "image": "assets/scroll.png",
+          "confidence": 0.85,
+          "grayscale": false,
+          "area": "window",
+          "region": null,
+          "button": "right",
+          "anchor": "top_left",
+          "offset_x": 5,
+          "offset_y": 5,
+          "timeout_ms": 0,
+          "retry_interval_ms": 100,
+          "on_not_found": "continue",
+          "notify_not_found": true,
+          "hold_ms": 20
+        },
+        {
+          "id": "potion",
+          "enabled": true,
+          "comment": "AHK *90",
+          "post_delay_ms": 100,
+          "type": "image_click",
+          "image": "assets/potion.png",
+          "confidence": 0.87,
+          "grayscale": false,
+          "area": "window",
+          "region": null,
+          "button": "right",
+          "anchor": "top_left",
+          "offset_x": 5,
+          "offset_y": 5,
+          "timeout_ms": 0,
+          "retry_interval_ms": 100,
+          "on_not_found": "continue",
+          "notify_not_found": true,
+          "hold_ms": 20
+        },
+        {
+          "id": "gheed",
+          "enabled": true,
+          "comment": "AHK *90",
+          "post_delay_ms": 100,
+          "type": "image_click",
+          "image": "assets/gheed.png",
+          "confidence": 0.87,
+          "grayscale": false,
+          "area": "window",
+          "region": null,
+          "button": "right",
+          "anchor": "top_left",
+          "offset_x": 5,
+          "offset_y": 5,
+          "timeout_ms": 0,
+          "retry_interval_ms": 100,
+          "on_not_found": "continue",
+          "notify_not_found": true,
+          "hold_ms": 20
+        },
+        {
+          "id": "inv_close",
+          "enabled": true,
+          "comment": "Inventar schließen",
+          "post_delay_ms": 0,
+          "type": "key",
+          "keys": "y",
+          "mode": "tap",
+          "hold_ms": 30
+        }
+      ]
+    },
+    {
+      "id": "respawn",
+      "name": "Respawn + Buffs",
+      "enabled": true,
+      "triggers": [
+        "f2"
+      ],
+      "passthrough": false,
+      "wildcard": false,
+      "mode": "once",
+      "interval_ms": 100,
+      "repeat_count": 0,
+      "duration_s": 0.0,
+      "steps": [
+        {
+          "id": "esc",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 150,
+          "type": "key",
+          "keys": "esc",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "c1",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 150,
+          "type": "mouse_click",
+          "button": "left",
+          "x": 950,
+          "y": 590,
+          "space": "screen",
+          "clicks": 1,
+          "hold_ms": 20,
+          "interval_ms": 40
+        },
+        {
+          "id": "c2",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 2250,
+          "type": "mouse_click",
+          "button": "left",
+          "x": 880,
+          "y": 590,
+          "space": "screen",
+          "clicks": 1,
+          "hold_ms": 20,
+          "interval_ms": 40
+        },
+        {
+          "id": "c3",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 8000,
+          "type": "mouse_click",
+          "button": "left",
+          "x": 115,
+          "y": 520,
+          "space": "screen",
+          "clicks": 1,
+          "hold_ms": 20,
+          "interval_ms": 40
+        },
+        {
+          "id": "run_buffs",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 0,
+          "type": "run_macro",
+          "macro_id": "buffs"
+        }
+      ]
+    },
+    {
+      "id": "spam3",
+      "name": "Taste 3 spammen (Toggle)",
+      "enabled": false,
+      "triggers": [
+        "f3"
+      ],
+      "passthrough": false,
+      "wildcard": false,
+      "mode": "toggle",
+      "interval_ms": 500,
+      "repeat_count": 0,
+      "duration_s": 0.0,
+      "steps": [
+        {
+          "id": "k3",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 0,
+          "type": "key",
+          "keys": "3",
+          "mode": "tap",
+          "hold_ms": 30
+        }
+      ]
+    },
+    {
+      "id": "multi",
+      "name": "Alle Skills 1–4 (Mehrfachbelegung)",
+      "enabled": false,
+      "triggers": [
+        "xbutton1"
+      ],
+      "passthrough": false,
+      "wildcard": false,
+      "mode": "once",
+      "interval_ms": 100,
+      "repeat_count": 0,
+      "duration_s": 0.0,
+      "steps": [
+        {
+          "id": "m1",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 40,
+          "type": "key",
+          "keys": "1",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "m2",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 40,
+          "type": "key",
+          "keys": "2",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "m3",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 40,
+          "type": "key",
+          "keys": "3",
+          "mode": "tap",
+          "hold_ms": 30
+        },
+        {
+          "id": "m4",
+          "enabled": true,
+          "comment": "",
+          "post_delay_ms": 40,
+          "type": "key",
+          "keys": "4",
+          "mode": "tap",
+          "hold_ms": 30
+        }
+      ]
+    }
+  ]
+}
